@@ -28,12 +28,13 @@ export async function saveGoogleMapsLink(
 
   try {
     const placeDetails: PlaceDetails = await getPlaceDetails(mapUrl);
+    console.log(`Place details: ${JSON.stringify(placeDetails)}`);
 
-    const saveMapLinkParams: SaveMapLinkParams = {
+    const saveMapLinkParams = {
       userId,
       groupId: groupId || '',
       link: mapUrl,
-      ...placeDetails
+      placeDetails
     };
 
     await saveMapLink(saveMapLinkParams);
@@ -41,8 +42,8 @@ export async function saveGoogleMapsLink(
     return { success: true, placeDetails };
   } catch (error) {
     console.error('Error processing request:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
