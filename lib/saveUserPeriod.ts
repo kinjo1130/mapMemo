@@ -3,8 +3,8 @@ import { collection, doc, setDoc } from 'firebase/firestore';
 
 export interface UserPeriod {
   userId: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
 }
 
 export const saveUserPeriod = async (userPeriod: UserPeriod): Promise<void> => {
