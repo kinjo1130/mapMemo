@@ -10,7 +10,11 @@ export const saveUserProfile = async (profile: Profile): Promise<void> => {
       userId: profile.userId,
       displayName: profile.displayName,
       pictureUrl: profile.pictureUrl || '',
-      statusMessage: profile.statusMessage || ''
+      statusMessage: profile.statusMessage || '',
+      period: {
+        startDate: null,
+        endDate: null
+      }
     }, { merge: true });
     console.log(`User profile saved: ${profile.displayName}`);
   } catch (error) {
