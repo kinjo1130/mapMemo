@@ -23,7 +23,7 @@ Map Memoは、LINEボットを通じてGoogle Mapsのリンクを簡単に保存
 
 1. リポジトリをクローン:
    ```
-   git clone https://github.com/kinjo1130/map-memo.git
+   git clone https://github.com/kinjo1130/useMap.git
    cd map-memo
    ```
 
@@ -71,7 +71,7 @@ Map Memoは、LINEボットを通じてGoogle Mapsのリンクを簡単に保存
 
 ## 📞 お問い合わせ
 
-質問や提案がある場合は、[Issues](https://github.com/kinjo1130/map-memo/issues) でお問い合わせください。
+質問や提案がある場合は、[Issues](https://github.com/kinjo1130/useMap/issues) でお問い合わせください。
 
 ---
 
