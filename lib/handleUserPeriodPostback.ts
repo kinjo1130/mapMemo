@@ -29,14 +29,14 @@ export const handleUserPeriodPostback = async (event: PostbackEvent) => {
   // 終了日だけが指定されている場合、開始日が必要であることを伝える
   if (userPeriod.endDate && !userPeriod.startDate && !existingPeriod?.startDate) {
     await saveUserPeriod(userPeriod);
-    await sendReplyMessage(replyToken, `終了日が設定されました。\n開始日を設定してください。`);
+    await sendReplyMessage(replyToken, `終了日が設定されました。\n終了日: ${userPeriod.endDate}\n開始日を設定してください。`);
     return;
   }
 
   // 開始日だけが指定されている場合、終了日が必要であることを伝える
   if (userPeriod.startDate && !userPeriod.endDate && !existingPeriod?.endDate) {
     await saveUserPeriod(userPeriod);
-    await sendReplyMessage(replyToken, `開始日が設定されました。\n終了日を設定してください。`);
+    await sendReplyMessage(replyToken, `開始日が設定されました。\n開始日: ${userPeriod.startDate}\n終了日を設定してください。`);
     return;
   }
 
