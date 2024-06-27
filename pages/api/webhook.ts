@@ -6,6 +6,7 @@ import { saveMapLink } from '../../lib/saveMapLink';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
 import { handleUserPeriodPostback } from '@/lib/handleUserPeriodPostback';
 import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
+import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -44,6 +45,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         console.log(`ReplyToken: ${replyToken}`);
         console.log(`Message: ${messageText}`);
+
+        // 期間設定変更のチェック
+        if (messageText === '保存期間変更') {
+          await sendPeriodSettingMessage(replyToken);
+          continue;
+        }
 
         // 期間内かどうかのチェック
         const withinPeriod = await isWithinUserPeriod(userId, timestamp);
