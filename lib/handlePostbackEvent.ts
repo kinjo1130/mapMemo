@@ -16,9 +16,6 @@ export const handlePostbackEvent = async (event: PostbackEvent) => {
     } else if (data.startsWith('action=set')) {
       await handleUserPeriodPostback(event);
       return;
-    } else {
-      await sendReplyMessage(event.replyToken, '未知のポストバックアクションです。');
-      return;
     }
   } catch (error) {
     await sendReplyMessage(event.replyToken, 'ポストバックイベントの処理中にエラーが発生しました。');
