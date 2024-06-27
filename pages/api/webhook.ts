@@ -8,6 +8,7 @@ import { handleUserPeriodPostback } from '@/lib/handleUserPeriodPostback';
 import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
 import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
 import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
+import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -60,15 +61,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           continue;
         }
 
-        // Google Mapsのリンクの場合は保存
         if (isGoogleMapsUrl(messageText)) {
           try {
-            await saveMapLink({ userId, groupId, link: messageText });
-            await sendReplyMessage(replyToken, 'Google Mapsのリンクを保存しました。');
+            // ここで saveGoogleMapsLink 関数を呼び出す
+            const result = await saveGoogleMapsLink({
+              mapUrl: messageText,
+              userId,
+              groupId: groupId || ''
+            });
+            console.log(`saveGoogleMapsLink result: ${JSON.stringify(result)}`);
+            if (result.error) {
+              await sendReplyMessage(replyToken, `エラーが発生しました: ${result.error}`);
+            } else {
+              await sendReplyMessage(replyToken, 'Google Mapsのリンクを保存しました。');
+            }
           } catch (error) {
-            console.error('Error saving link:', error);
-            res.status(500).send('Error saving link');
-            return;
+            console.error('Error saving Google Maps link:', error);
+            await sendReplyMessage(replyToken, 'リンクの保存中にエラーが発生しました。');
           }
         } else {
           console.log(`Received non-Google Maps URL: ${messageText}`);
