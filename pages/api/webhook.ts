@@ -7,6 +7,7 @@ import { sendReplyMessage } from '../../lib/sendReplyMessage';
 import { handleUserPeriodPostback } from '@/lib/handleUserPeriodPostback';
 import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
 import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
+import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -73,14 +74,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           console.log(`Received non-Google Maps URL: ${messageText}`);
         }
       }
-
       if (event.type === 'postback') {
         try {
-          await handleUserPeriodPostback(event);
+          await handlePostbackEvent(event);
         } catch (error) {
           await sendReplyMessage(event.replyToken, 'ポストバックイベントの処理中にエラーが発生しました。');
         }
       }
+
     }
 
     res.status(200).send('OK');
