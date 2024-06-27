@@ -25,10 +25,24 @@ export const handleUserPeriodPostback = async (event: PostbackEvent) => {
       await sendReplyMessage(replyToken, '終了日は開始日の後でなければなりません。もう一度やり直してください。');
     } else {
       await saveUserPeriod(userPeriod);
-      await sendReplyMessage(replyToken, '期間が正常に設定されました。');
+      await sendReplyMessage(replyToken, `期間が正常に設定されました。\n開始日: ${userPeriod.startDate}\n終了日: ${userPeriod.endDate}`);
     }
   } else {
     await saveUserPeriod(userPeriod);
-    await sendReplyMessage(replyToken, '日付が設定されました。期間設定を完了してください。');
+    let message = '日付が設定されました。';
+
+    if (userPeriod.startDate) {
+      message += `\n開始日: ${userPeriod.startDate}`;
+    } else {
+      message += '\n開始日を設定してください。';
+    }
+
+    if (userPeriod.endDate) {
+      message += `\n終了日: ${userPeriod.endDate}`;
+    } else {
+      message += '\n終了日を設定してください。';
+    }
+
+    await sendReplyMessage(replyToken, message);
   }
 };

@@ -4,20 +4,20 @@ import { TemplateMessage } from '@line/bot-sdk';
 export const sendPeriodSettingMessage = async (replyToken: string) => {
   const message: TemplateMessage = {
     type: 'template',
-    altText: 'Set period',
+    altText: '期間設定',
     template: {
       type: 'buttons',
-      text: 'Please select an option to set the period',
+      text: '期間を設定するオプションを選択してください',
       actions: [
         {
           type: 'datetimepicker',
-          label: 'Start Date',
+          label: '開始日',
           data: 'action=setStartDate',
           mode: 'date'
         },
         {
           type: 'datetimepicker',
-          label: 'End Date',
+          label: '終了日',
           data: 'action=setEndDate',
           mode: 'date'
         }
