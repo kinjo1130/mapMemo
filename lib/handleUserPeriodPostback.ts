@@ -1,40 +1,7 @@
 import { PostbackEvent } from '@line/bot-sdk';
 import { sendReplyMessage } from './sendReplyMessage';
 import { saveUserPeriod, UserPeriod } from './saveUserPeriod';
-import { db } from './init/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-
-const getUserPeriodFromDB = async (userId: string): Promise<UserPeriod | null> => {
-  try {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-    if (!userDoc.exists()) {
-      return null;
-    }
-
-    const userData = userDoc.data();
-    if (!userData || !userData.period) {
-      return null;
-    }
-
-    const { startDate, endDate } = userData.period;
-
-    // 期間データが存在するかチェック
-    const period: UserPeriod = { userId };
-    if (startDate) {
-      period.startDate = startDate;
-    }
-    if (endDate) {
-      period.endDate = endDate;
-    }
-
-    return period;
-  } catch (error) {
-    console.error('Error fetching user period from DB:', error);
-    return null;
-  }
-};
-
+import { getUserPeriodFromDB } from './getUserPeriodFromDB';
 
 export const handleUserPeriodPostback = async (event: PostbackEvent) => {
   const data = event.postback.data;
@@ -59,6 +26,21 @@ export const handleUserPeriodPostback = async (event: PostbackEvent) => {
     }
   }
 
+  // 終了日だけが指定されている場合、開始日が必要であることを伝える
+  if (userPeriod.endDate && !userPeriod.startDate && !existingPeriod?.startDate) {
+    await saveUserPeriod(userPeriod);
+    await sendReplyMessage(replyToken, `終了日が設定されました。\n開始日を設定してください。`);
+    return;
+  }
+
+  // 開始日だけが指定されている場合、終了日が必要であることを伝える
+  if (userPeriod.startDate && !userPeriod.endDate && !existingPeriod?.endDate) {
+    await saveUserPeriod(userPeriod);
+    await sendReplyMessage(replyToken, `開始日が設定されました。\n終了日を設定してください。`);
+    return;
+  }
+
+  // 両方の期間が設定されている場合
   if (userPeriod.startDate && userPeriod.endDate) {
     if (new Date(userPeriod.startDate) > new Date(userPeriod.endDate)) {
       await sendReplyMessage(replyToken, '終了日は開始日の後でなければなりません。もう一度やり直してください。');
@@ -67,7 +49,7 @@ export const handleUserPeriodPostback = async (event: PostbackEvent) => {
       await sendReplyMessage(replyToken, `期間が正常に設定されました。\n開始日: ${userPeriod.startDate}\n終了日: ${userPeriod.endDate}`);
     }
   } else {
-    await saveUserPeriod(userPeriod);
+    // まだ設定されていない日付を伝える
     let message = '日付が設定されました。';
 
     if (!userPeriod.startDate && !existingPeriod?.startDate) {
