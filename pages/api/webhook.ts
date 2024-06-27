@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { lineMiddleware, client } from '../../lib/init/line';
+import { client } from '../../lib/init/line';
 import { saveUserProfile } from '../../lib/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
 import { saveMapLink } from '../../lib/saveMapLink';
