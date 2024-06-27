@@ -1,19 +1,27 @@
 import { db } from './init/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 export interface UserPeriod {
   userId: string;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 export const saveUserPeriod = async (userPeriod: UserPeriod): Promise<void> => {
+  const { userId, startDate, endDate } = userPeriod;
+
+  // undefinedをnullに変換
+  const periodData = {
+    userId,
+    startDate: startDate || null,
+    endDate: endDate || null
+  };
+
   try {
-    const userRef = doc(collection(db, 'users'), userPeriod.userId);
-    await setDoc(userRef, { period: userPeriod }, { merge: true });
-    console.log(`User period saved: ${userPeriod.userId}`);
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { period: periodData }, { merge: true });
   } catch (error) {
     console.error('Error saving user period:', error);
-    throw new Error('Unable to save period. Please try again.');
+    throw error;
   }
 };

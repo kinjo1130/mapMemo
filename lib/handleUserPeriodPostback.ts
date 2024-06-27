@@ -13,8 +13,8 @@ export const handleUserPeriodPostback = async (event: PostbackEvent) => {
 
   let userPeriod: UserPeriod = {
     userId,
-    startDate: existingPeriod?.startDate || undefined,
-    endDate: existingPeriod?.endDate || undefined
+    startDate: existingPeriod?.startDate || null,
+    endDate: existingPeriod?.endDate || null
   };
 
   // 型ガードを使用して params が DateTimePostbackのdate型であることを確認する
