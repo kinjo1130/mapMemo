@@ -2,8 +2,11 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { lineMiddleware, client } from '../../lib/init/line';
 import { saveUserProfile } from '../../lib/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
-import { saveMapLink } from '../../lib/SaveMapLink';
+import { saveMapLink } from '../../lib/saveMapLink';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
+import { handleUserPeriodPostback } from '@/lib/handleUserPeriodPostback';
+import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
+
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
     url.startsWith('https://www.google.com/maps') ||
@@ -37,10 +40,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const { userId, groupId } = event.source;
         const replyToken = event.replyToken;
         const messageText = event.message.text;
+        const timestamp = new Date(event.timestamp);
 
         console.log(`ReplyToken: ${replyToken}`);
         console.log(`Message: ${messageText}`);
 
+        // 期間内かどうかのチェック
+        const withinPeriod = await isWithinUserPeriod(userId, timestamp);
+        if (!withinPeriod) {
+          await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
+          continue;
+        }
+
+        // Google Mapsのリンクの場合は保存
         if (isGoogleMapsUrl(messageText)) {
           try {
             await saveMapLink({ userId, groupId, link: messageText });
@@ -52,7 +64,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
         } else {
           console.log(`Received non-Google Maps URL: ${messageText}`);
-          await sendReplyMessage(replyToken, `Received your message: ${messageText}`);
+        }
+      }
+
+      if (event.type === 'postback') {
+        try {
+          await handleUserPeriodPostback(event);
+        } catch (error) {
+          await sendReplyMessage(event.replyToken, 'ポストバックイベントの処理中にエラーが発生しました。');
         }
       }
     }
