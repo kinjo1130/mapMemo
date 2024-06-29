@@ -3,7 +3,7 @@ import { LogOut, X, MessageCircle } from "lucide-react";
 import { Profile } from "@line/bot-sdk";
 
 interface HeaderProps {
-  profile: Profile;
+  profile: Profile | null;
   logout: () => void;
 }
 
@@ -50,27 +50,32 @@ const ProfileDetail: React.FC<{ profile: Profile; onClose: () => void; logout: (
 const Header: React.FC<HeaderProps> = ({ profile, logout }) => {
   const [showProfile, setShowProfile] = useState(false);
 
+  if (!profile) {
+    return (
+      <header className="bg-primary text-white p-4 shadow-md">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Map Memo</h1>
+          <div className="animate-pulse bg-white bg-opacity-50 rounded-full w-10 h-10"></div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <>
       <header className="bg-primary text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold">Map Memo</h1>
-          </div>
-          <div className="flex items-center">
-            {profile.pictureUrl && (
-              <button
-                onClick={() => setShowProfile(true)}
-                className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full"
-              >
-                <img
-                  src={profile.pictureUrl}
-                  alt={profile.displayName}
-                  className="w-10 h-10 rounded-full border-2 border-white"
-                />
-              </button>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold">Map Memo</h1>
+          <button
+            onClick={() => setShowProfile(true)}
+            className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full"
+          >
+            <img
+              src={profile.pictureUrl || "/api/placeholder/100/100"}
+              alt={profile.displayName}
+              className="w-10 h-10 rounded-full border-2 border-white"
+            />
+          </button>
         </div>
       </header>
       {showProfile && (
