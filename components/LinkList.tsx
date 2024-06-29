@@ -1,17 +1,53 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Grid, List, MapPin, Trash2, MessageCircle } from "lucide-react";
 import { Link } from "@/types/Link";
-import useDeleteDocument from "@/hooks/useDeleteDocument";
 import Toast from "./Toast";
 
 interface LinkListProps {
   links: Link[];
   onDelete: (id: string) => Promise<void>;
+  onLoadMore: () => void;
+  hasMore: boolean;
+  isLoading: boolean;
 }
 
-const LinkList: React.FC<LinkListProps> = ({ links, onDelete }) => {
+const LinkList: React.FC<LinkListProps> = ({
+  links,
+  onDelete,
+  onLoadMore,
+  hasMore,
+  isLoading,
+}) => {
   const [columns, setColumns] = useState<1 | 2 | 3>(1);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastLinkElementRef = useCallback(
+    (node: HTMLLIElement | null) => {
+      if (isLoading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            onLoadMore();
+          }
+        },
+        { threshold: 1.0 }
+      );
+      if (node) observer.current.observe(node);
+    },
+    [hasMore, onLoadMore, isLoading]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, []);
 
   const layoutOptions = [
     { cols: 1, icon: <List size={24} /> },
@@ -27,24 +63,33 @@ const LinkList: React.FC<LinkListProps> = ({ links, onDelete }) => {
     };
   };
 
-  const handleDelete = useCallback(async (id: string) => {
-    try {
-      await onDelete(id);
-      setToast({ message: "リンクが正常に削除されました", type: 'success' });
-    } catch (err) {
-      console.error("Delete error:", err);
-      setToast({ message: "リンクの削除中にエラーが発生しました", type: 'error' });
-    }
-  }, [onDelete]);
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        await onDelete(id);
+        setToast({ message: "リンクが正常に削除されました", type: "success" });
+      } catch (err) {
+        console.error("Delete error:", err);
+        setToast({
+          message: "リンクの削除中にエラーが発生しました",
+          type: "error",
+        });
+      }
+    },
+    [onDelete]
+  );
 
   if (links.length === 0) {
     return (
       <div className="container mx-auto p-4 text-center">
         <div className="bg-white shadow rounded-lg p-8">
           <MessageCircle size={64} className="mx-auto text-primary mb-4" />
-          <h2 className="text-2xl font-bold text-neutral-dark mb-2">リンクがまだありません</h2>
+          <h2 className="text-2xl font-bold text-neutral-dark mb-2">
+            リンクがまだありません
+          </h2>
           <p className="text-neutral">
-            ボットにGoogle Mapのリンクを送って、お気に入り場所のリンクを登録してください。
+            ボットにGoogle
+            Mapのリンクを送って、お気に入り場所のリンクを登録してください。
           </p>
         </div>
       </div>
@@ -71,9 +116,10 @@ const LinkList: React.FC<LinkListProps> = ({ links, onDelete }) => {
       </div>
 
       <ul style={getGridStyle()} className="sm:grid-cols-1">
-        {links.map((link) => (
+        {links.map((link, index) => (
           <li
-            key={link.docId}
+            key={`${link.docId}-${index}`}
+            ref={index === links.length - 1 ? lastLinkElementRef : null}
             className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300"
           >
             <div className="flex h-48">
@@ -88,7 +134,9 @@ const LinkList: React.FC<LinkListProps> = ({ links, onDelete }) => {
               </div>
               <div className="w-2/3 p-4 flex flex-col justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2 text-neutral-dark">{link.name}</h3>
+                  <h3 className="font-semibold text-lg mb-2 text-neutral-dark">
+                    {link.name}
+                  </h3>
                   <p className="text-sm text-neutral mb-2">{link.address}</p>
                   <a
                     href={link.link}
@@ -113,6 +161,15 @@ const LinkList: React.FC<LinkListProps> = ({ links, onDelete }) => {
           </li>
         ))}
       </ul>
+      {isLoading && <div className="text-center mt-4">読み込み中...</div>}
+      {!isLoading && hasMore && (
+        <button
+          onClick={onLoadMore}
+          className="mt-4 w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-300"
+        >
+          さらに読み込む
+        </button>
+      )}
       {toast && (
         <Toast
           message={toast.message}
