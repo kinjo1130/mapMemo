@@ -4,9 +4,7 @@ import { db } from './init/firebase';
 export interface PlaceDetails {
   name: string;
   address: string;
-  rating: number | null;
   photoUrl: string | null;
-  openingHours: string[] | null;
 }
 
 export interface SaveMapLinkParams {
@@ -25,9 +23,7 @@ export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveM
       link,
       name: placeDetails.name,
       address: placeDetails.address,
-      rating: placeDetails.rating,
       photoUrl: placeDetails.photoUrl,
-      openingHours: placeDetails.openingHours,
       timestamp: serverTimestamp()
     };
 

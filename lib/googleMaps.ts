@@ -3,9 +3,7 @@ import { extractPlaceInfo, PlaceInfo, expandShortUrl } from './expandUrl';
 export interface PlaceDetails {
   name: string;
   address: string;
-  rating: number | null;
   photoUrl: string | null;
-  openingHours: string[] | null;
 }
 
 export async function getPlaceDetails(mapUrl: string): Promise<PlaceDetails> {
@@ -79,8 +77,6 @@ async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDe
   return {
     name: result.name || '',
     address: result.formatted_address || '',
-    rating: result.rating || null,
     photoUrl: photoUrl,
-    openingHours: result.opening_hours ? result.opening_hours.weekday_text : null,
   };
 }
