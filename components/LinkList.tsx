@@ -33,9 +33,9 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
     return (
       <div className="container mx-auto p-4 text-center">
         <div className="bg-white shadow rounded-lg p-8">
-          <MessageCircle size={64} className="mx-auto text-blue-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">リンクがまだありません</h2>
-          <p className="text-gray-600">
+          <MessageCircle size={64} className="mx-auto text-primary mb-4" />
+          <h2 className="text-2xl font-bold text-neutral-dark mb-2">リンクがまだありません</h2>
+          <p className="text-neutral">
             ボットにGoogle Mapのリンクを送って、お気に入り場所のリンクを登録してください。
           </p>
         </div>
@@ -52,8 +52,8 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
             onClick={() => setColumns(option.cols)}
             className={`p-2 rounded ${
               columns === option.cols
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                ? "bg-primary text-white"
+                : "bg-neutral-light text-neutral-dark hover:bg-neutral"
             }`}
             aria-label={`${option.cols}列表示に切り替え`}
           >
@@ -70,7 +70,7 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
           >
             <div className="flex h-48">
               <div className="w-1/3 relative">
-                <div className="absolute inset-0 bg-gray-200">
+                <div className="absolute inset-0 bg-neutral-light">
                   <img
                     src={link.photoUrl || "/api/placeholder/150/150"}
                     alt={link.name || "場所の画像"}
@@ -80,13 +80,13 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
               </div>
               <div className="w-2/3 p-4 flex flex-col justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">{link.name}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{link.address}</p>
+                  <h3 className="font-semibold text-lg mb-2 text-neutral-dark">{link.name}</h3>
+                  <p className="text-sm text-neutral mb-2">{link.address}</p>
                   <a
                     href={link.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-700 flex items-center mb-2 underline"
+                    className="text-primary hover:text-primary-dark flex items-center mb-2 underline"
                   >
                     <MapPin size={16} className="mr-2 flex-shrink-0" />
                     <span>Google Map</span>
@@ -94,7 +94,7 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
                 </div>
                 <button
                   onClick={() => handleDelete(link.docId)}
-                  className="text-red-500 hover:text-red-700 flex items-center self-start"
+                  className="text-secondary hover:text-secondary-dark flex items-center self-start"
                   aria-label="アイテムを削除"
                 >
                   <Trash2 size={16} className="mr-2 flex-shrink-0" />
