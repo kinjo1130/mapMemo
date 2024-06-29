@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Grid, List, MapPin, Trash2, MessageCircle } from "lucide-react";
 import { Link } from "@/types/Link";
 import useDeleteDocument from "@/hooks/useDeleteDocument";
+import Toast from "./Toast";
 
 interface LinkListProps {
   links: Link[];
+  onDelete: (id: string) => Promise<void>;
 }
 
-const LinkList: React.FC<LinkListProps> = ({ links }) => {
+const LinkList: React.FC<LinkListProps> = ({ links, onDelete }) => {
   const [columns, setColumns] = useState<1 | 2 | 3>(1);
-  const { deleteDocument, loading, error } = useDeleteDocument();
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const layoutOptions = [
     { cols: 1, icon: <List size={24} /> },
@@ -25,9 +27,15 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
     };
   };
 
-  const handleDelete = async (id: string | number) => {
-    await deleteDocument('Links', id.toString());
-  };
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await onDelete(id);
+      setToast({ message: "リンクが正常に削除されました", type: 'success' });
+    } catch (err) {
+      console.error("Delete error:", err);
+      setToast({ message: "リンクの削除中にエラーが発生しました", type: 'error' });
+    }
+  }, [onDelete]);
 
   if (links.length === 0) {
     return (
@@ -105,6 +113,13 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
           </li>
         ))}
       </ul>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
