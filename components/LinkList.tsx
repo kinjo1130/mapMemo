@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Grid, List, MapPin, Trash2 } from "lucide-react";
+import { Grid, List, MapPin, Trash2, MessageCircle } from "lucide-react";
 import { Link } from "@/types/Link";
 import useDeleteDocument from "@/hooks/useDeleteDocument";
 
@@ -26,9 +26,22 @@ const LinkList: React.FC<LinkListProps> = ({ links }) => {
   };
 
   const handleDelete = async (id: string | number) => {
-    console.log(`削除: ID ${id} のアイテム`);
     await deleteDocument('Links', id.toString());
   };
+
+  if (links.length === 0) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <div className="bg-white shadow rounded-lg p-8">
+          <MessageCircle size={64} className="mx-auto text-blue-500 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">リンクがまだありません</h2>
+          <p className="text-gray-600">
+            ボットにGoogle Mapのリンクを送って、お気に入り場所のリンクを登録してください。
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">
