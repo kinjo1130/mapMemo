@@ -9,6 +9,7 @@ import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
 import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
 import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
+import { checkUserExists } from '@/lib/checkUserExists';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -47,6 +48,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         console.log(`ReplyToken: ${replyToken}`);
         console.log(`Message: ${messageText}`);
+        const userExists = await checkUserExists(userId);
+        if (!userExists) {
+          console.log(`User ${userId} is not registered`);
+          return
+        }
 
         // 期間設定変更のチェック
         if (messageText === '保存期間変更') {
