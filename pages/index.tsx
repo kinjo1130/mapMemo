@@ -4,13 +4,10 @@ import { db } from "../lib/init/firebase";
 import { initLiff } from "../lib/init/liff";
 import { Profile } from "@line/bot-sdk";
 import { useLiff } from "@/hooks/useLiff";
+import LinkList from "@/components/LinkList";
+import { Link } from "@/types/Link";
+import Header from "@/components/Header";
 
-interface Link {
-  userId: string;
-  groupId: string;
-  link: string;
-  timestamp: { seconds: number; nanoseconds: number };
-}
 
 export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -48,21 +45,11 @@ export default function Home() {
   }
 
   return (
-    <div>
-      <h1>Welcome, {profile.displayName}</h1>
-      {/* ログアウト */}
-      <button onClick={logout}>Logout</button>
-
-      <ul>
-        {links.map((link, index) => (
-          <li key={index}>
-            Group ID: {link.groupId} -{" "}
-            <a href={link.link} target="_blank">
-              {link.link}
-            </a>
-          </li>
-        ))}
-      </ul>
+    <div className="min-h-screen bg-gray-100">
+      <Header profile={profile} logout={logout} />
+      <main className="container mx-auto p-4">
+        <LinkList links={links} />
+      </main>
     </div>
   );
 }

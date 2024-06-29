@@ -14,6 +14,7 @@
     "@line/liff": "^2.23.2",
     "core-js": "^3.37.1",
     "firebase": "^10.12.2",
+    "lucide-react": "^0.399.0",
     "next": "14.2.4",
     "react": "^18",
     "react-dom": "^18"

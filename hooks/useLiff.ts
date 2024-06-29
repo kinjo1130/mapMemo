@@ -5,6 +5,7 @@ export const useLiff = () => {
     console.log('Logging out');
     if (liff.isLoggedIn()) {
       liff.logout();
+      window.location.reload();
     }
   }
 

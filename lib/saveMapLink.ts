@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from './init/firebase';
 
 export interface PlaceDetails {
@@ -28,9 +28,14 @@ export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveM
     };
 
     // Firestoreに保存
-    await addDoc(collection(db, 'Links'), linkData);
+    const docRef = await addDoc(collection(db, 'Links'), linkData);
 
-    console.log('Link and place details saved to Firestore');
+    // ドキュメントIDを取得してデータに追加
+    await updateDoc(doc(db, 'Links', docRef.id), {
+      docId: docRef.id
+    });
+
+    console.log('Link and place details saved to Firestore with document ID');
   } catch (error) {
     console.error('Error saving link and place details to Firestore', error);
     throw error;
