@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.0",
     "@line/bot-sdk": "^9.2.2",
     "@line/liff": "^2.23.2",
+    "core-js": "^3.37.1",
     "firebase": "^10.12.2",
     "next": "14.2.4",
     "react": "^18",
