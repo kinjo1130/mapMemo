@@ -3,12 +3,12 @@ import { client } from '../../lib/init/line';
 import { saveUserProfile } from '../../lib/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
-import { handleUserPeriodPostback } from '@/lib/handleUserPeriodPostback';
 import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
 import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
 import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
 import { checkUserExists } from '@/lib/checkUserExists';
+import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -47,6 +47,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         console.log(`ReplyToken: ${replyToken}`);
         console.log(`Message: ${messageText}`);
+        // グループメッセージの場合、グループ情報を取得または保存
+        if (groupId) {
+          try {
+            const groupInfo = await getOrFetchGroupInfo(groupId, userId);
+            console.log(`Group info: ${JSON.stringify(groupInfo)}`);
+          } catch (error) {
+            console.error('Error getting or fetching group info:', error);
+          }
+        }
         const userExists = await checkUserExists(userId);
         if (!userExists) {
           console.log(`User ${userId} is not registered`);
