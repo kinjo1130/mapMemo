@@ -137,7 +137,7 @@ const LinkList: React.FC<LinkListProps> = ({
                   <h3 className="font-semibold text-lg mb-2 text-neutral-dark">
                     {link.name}
                   </h3>
-                  <p className="text-sm text-neutral mb-2">{link.address}</p>
+                  <p className="text-sm text-neutral mb-2 line-clamp-2">{link.address}</p>
                   <a
                     href={link.link}
                     target="_blank"
