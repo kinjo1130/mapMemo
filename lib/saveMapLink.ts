@@ -1,10 +1,13 @@
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from './init/firebase';
+import { Link } from '@/types/Link';
 
 export interface PlaceDetails {
   name: string;
   address: string;
   photoUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface SaveMapLinkParams {
@@ -24,7 +27,9 @@ export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveM
       name: placeDetails.name,
       address: placeDetails.address,
       photoUrl: placeDetails.photoUrl,
-      timestamp: serverTimestamp()
+      timestamp: serverTimestamp(),
+      lat: placeDetails.latitude,
+      lng: placeDetails.longitude
     };
 
     // Firestoreに保存

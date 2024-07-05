@@ -4,6 +4,8 @@ export interface PlaceDetails {
   name: string;
   address: string;
   photoUrl: string | null;
+  latitude: number;
+  longitude: number;
 }
 
 export async function getPlaceDetails(mapUrl: string): Promise<PlaceDetails> {
@@ -54,7 +56,7 @@ async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDe
   const detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json';
   const detailsParams = new URLSearchParams({
     place_id: placeId,
-    fields: 'name,formatted_address,rating,photo,opening_hours',
+    fields: 'name,formatted_address,rating,photo,geometry',  // Added 'geometry' field
     key: apiKey,
     language: 'ja',  // 日本語の結果を要求
   });
@@ -68,6 +70,7 @@ async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDe
   }
 
   const result = detailsData.result;
+  console.log('Place details:', result);
 
   let photoUrl: string | null = null;
   if (result.photos && result.photos.length > 0) {
@@ -78,5 +81,7 @@ async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDe
     name: result.name || '',
     address: result.formatted_address || '',
     photoUrl: photoUrl,
+    latitude: result.geometry.location.lat || placeInfo.coordinates?.lat || 0,
+    longitude: result.geometry.location.lng || placeInfo.coordinates?.lng || 0,
   };
 }

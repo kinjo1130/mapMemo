@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { client } from '../../lib/init/line';
 import { saveUserProfile } from '../../lib/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
-import { saveMapLink } from '../../lib/saveMapLink';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
 import { handleUserPeriodPostback } from '@/lib/handleUserPeriodPostback';
 import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
