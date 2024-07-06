@@ -1,19 +1,32 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLiff } from "@/hooks/useLiff";
 import LinkList from "@/components/LinkList";
 import Header from "@/components/Header";
-import { useLinks } from "@/hooks/useLinks";
+import Map from "@/components/Map";
 import { useProfile } from "@/hooks/useProfile";
+import { useSearch } from "@/hooks/useSearch";
+import { TabButton } from "@/components/TabButton";
 
-const LINKS_PER_PAGE = 5;
+type Tab = "map" | "list";
 
 export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
-  const { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete } =
-    useLinks(LINKS_PER_PAGE);
   const { logout } = useLiff();
+  const [activeTab, setActiveTab] = useState<Tab>("list");
 
-  React.useEffect(() => {
+  const {
+    links,
+    searchTerm,
+    isSearching,
+    hasMore,
+    isLoading,
+    handleSearchInputChange,
+    handleLoadMore,
+    handleDelete,
+    loadLinks
+  } = useSearch(profile?.userId ?? "");
+
+  useEffect(() => {
     if (profile) {
       loadLinks(profile.userId);
     }
@@ -24,16 +37,34 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100">
       <Header profile={profile} logout={logout} />
-      <main className="container mx-auto p-4">
-        <LinkList
-          links={links}
-          onDelete={handleDelete}
-          onLoadMore={handleLoadMore}
-          hasMore={hasMore}
-          isLoading={isLoading}
+      <div className="flex space-x-2 px-4 bg-white shadow">
+        <TabButton tab="list" label="リンク一覧" activeTab={activeTab} onClick={setActiveTab} />
+        <TabButton tab="map" label="マップ" activeTab={activeTab} onClick={setActiveTab} />
+      </div>
+      <div className="px-4 py-2 bg-white">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => handleSearchInputChange(e.target.value)}
+          placeholder="検索..."
+          className="w-full p-2 border rounded"
         />
+      </div>
+      <main className="flex-1 overflow-hidden">
+        {activeTab === "map" && <Map links={links} />}
+        {activeTab === "list" && (
+          <div className="h-full overflow-auto p-4">
+            <LinkList
+              links={links}
+              onDelete={handleDelete}
+              onLoadMore={handleLoadMore}
+              hasMore={hasMore && !searchTerm}
+              isLoading={isLoading || isSearching}
+            />
+          </div>
+        )}
       </main>
     </div>
   );

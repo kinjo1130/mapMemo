@@ -1,7 +1,17 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Grid, List, MapPin, Trash2, MessageCircle } from "lucide-react";
-import { Link } from "@/types/Link";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Grid, List, MapPin, Trash2, MessageCircle, Users } from "lucide-react";
 import Toast from "./Toast";
+import { Link } from "@/types/Link";
+
+interface User {
+  displayName: string;
+  pictureUrl: string;
+}
+
+interface Group {
+  groupName: string;
+  pictureUrl: string;
+}
 
 interface LinkListProps {
   links: Link[];
@@ -24,6 +34,7 @@ const LinkList: React.FC<LinkListProps> = ({
     type: "success" | "error";
   } | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
+
   const lastLinkElementRef = useCallback(
     (node: HTMLLIElement | null) => {
       if (isLoading) return;
@@ -122,7 +133,7 @@ const LinkList: React.FC<LinkListProps> = ({
             ref={index === links.length - 1 ? lastLinkElementRef : null}
             className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300"
           >
-            <div className="flex h-48">
+            <div className="flex h-42">
               <div className="w-1/3 relative">
                 <div className="absolute inset-0 bg-neutral-light">
                   <img
@@ -132,12 +143,14 @@ const LinkList: React.FC<LinkListProps> = ({
                   />
                 </div>
               </div>
-              <div className="w-2/3 p-4 flex flex-col justify-between">
+              <div className="w-2/3 p-3 flex flex-col justify-between">
                 <div>
                   <h3 className="font-semibold text-lg mb-2 text-neutral-dark">
                     {link.name}
                   </h3>
-                  <p className="text-sm text-neutral mb-2 line-clamp-2">{link.address}</p>
+                  <p className="text-xs text-neutral mb-2 line-clamp-1">
+                    {link.address}
+                  </p>
                   <a
                     href={link.link}
                     target="_blank"
@@ -148,14 +161,16 @@ const LinkList: React.FC<LinkListProps> = ({
                     <span>Google Map</span>
                   </a>
                 </div>
-                <button
-                  onClick={() => handleDelete(link.docId)}
-                  className="text-secondary hover:text-secondary-dark flex items-center self-start"
-                  aria-label="アイテムを削除"
-                >
-                  <Trash2 size={16} className="mr-2 flex-shrink-0" />
-                  {columns === 1 && <span>削除</span>}
-                </button>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-2 space-y-2 sm:space-y-0">
+                  <button
+                    onClick={() => handleDelete(link.docId)}
+                    className="text-secondary hover:text-secondary-dark flex items-center self-end sm:self-center"
+                    aria-label="アイテムを削除"
+                  >
+                    <Trash2 size={16} className="mr-2 flex-shrink-0" />
+                    <span className="text-xs">削除</span>
+                  </button>
+                </div>
               </div>
             </div>
           </li>

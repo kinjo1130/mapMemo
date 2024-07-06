@@ -61,5 +61,44 @@ export const useLinks = (linksPerPage: number) => {
     }
   }, []);
 
-  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete };
+  const searchLinks = useCallback(async (userId: string, searchTerm: string) => {
+    setIsLoading(true);
+    try {
+      const linksRef = collection(db, 'Links');
+      const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+
+      const baseQuery = query(
+        linksRef,
+        where('userId', '==', userId),
+        limit(100)  // 検索のベースとなる最大件数
+      );
+
+      const querySnapshot = await getDocs(baseQuery);
+      const allLinks: Link[] = [];
+      querySnapshot.forEach((doc) => {
+        allLinks.push({ ...doc.data(), docId: doc.id } as Link);
+      });
+
+      const filteredLinks = allLinks.filter(link => {
+        const nameMatches = searchTerms.every(term =>
+          link.name.toLowerCase().includes(term)
+        );
+        const addressMatches = searchTerms.every(term =>
+          link.address.toLowerCase().includes(term)
+        );
+        return nameMatches || addressMatches;
+      });
+
+      setLinks(filteredLinks.slice(0, linksPerPage));
+      setHasMore(filteredLinks.length > linksPerPage);
+      setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+    } catch (error) {
+      console.error('Error searching links:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [linksPerPage]);
+
+  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinks };
+
 };
