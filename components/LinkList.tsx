@@ -3,7 +3,6 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { Grid, List, MapPin, Trash2, MessageCircle, Users } from "lucide-react";
 import Toast from "./Toast";
 import { Link } from "@/types/Link";
-import { db } from "@/lib/init/firebase";
 
 interface User {
   displayName: string;
