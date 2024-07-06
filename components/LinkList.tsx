@@ -181,7 +181,7 @@ const LinkList: React.FC<LinkListProps> = ({
             ref={index === links.length - 1 ? lastLinkElementRef : null}
             className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300"
           >
-            <div className="flex h-64">
+            <div className="flex h-42">
               <div className="w-1/3 relative">
                 <div className="absolute inset-0 bg-neutral-light">
                   <img
