@@ -9,6 +9,7 @@ import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
 import { checkUserExists } from '@/lib/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
+import { sendPushMessage } from '@/lib/sendPushMessage';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -40,7 +41,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       // 他のイベント処理（例：messageイベント）
       if (event.type === 'message' && event.message.type === 'text') {
+        console.log("message", event.message)
+        console.log("引用token", event.message.quoteToken)
         const { userId, groupId } = event.source;
+        const quoteToken = event.message.quoteToken;
         const replyToken = event.replyToken;
         const messageText = event.message.text;
         const timestamp = new Date(event.timestamp);
@@ -87,7 +91,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             if (result.error) {
               await sendReplyMessage(replyToken, `エラーが発生しました: ${result.error}`);
             } else {
-              await sendReplyMessage(replyToken, 'Google Mapsのリンクを保存しました。');
+              // await sendReplyMessage(replyToken, 'Google Mapsのリンクを保存しました。');
+              // プッシュメッセージを送信（例: ユーザーに追加情報を提供する場合）
+              await sendPushMessage({
+                to: groupId ? groupId : userId,
+                message: 'リンクが正常に保存されました。',
+                quoteToken: quoteToken
+              });
             }
           } catch (error) {
             console.error('Error saving Google Maps link:', error);
