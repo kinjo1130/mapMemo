@@ -7,4 +7,6 @@ export interface Link {
   timestamp: string;
   userId: string;
   docId: string;
+  lat: number | null;
+  lng: number | null;
 }

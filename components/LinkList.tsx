@@ -210,6 +210,7 @@ const LinkList: React.FC<LinkListProps> = ({
                   </a>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-2 space-y-2 sm:space-y-0">
+
                   <div className="flex items-center">
                     {users[link.userId] && (
                       <div className="flex items-center mr-4">

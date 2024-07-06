@@ -29,7 +29,8 @@ export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveM
       photoUrl: placeDetails.photoUrl,
       timestamp: serverTimestamp(),
       lat: placeDetails.latitude,
-      lng: placeDetails.longitude
+      lng: placeDetails.longitude,
+      isPersonal: !groupId // groupIdが空文字列の場合は個人のリンクとして扱う
     };
 
     // Firestoreに保存
