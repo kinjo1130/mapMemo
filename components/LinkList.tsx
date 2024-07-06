@@ -64,49 +64,49 @@ const LinkList: React.FC<LinkListProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    const fetchUsersAndGroups = async () => {
-      const userIds = links.reduce((acc, link) => {
-        if (!acc.includes(link.userId)) {
-          acc.push(link.userId);
-        }
-        return acc;
-      }, [] as string[]);
+  // useEffect(() => {
+  //   const fetchUsersAndGroups = async () => {
+  //     const userIds = links.reduce((acc, link) => {
+  //       if (!acc.includes(link.userId)) {
+  //         acc.push(link.userId);
+  //       }
+  //       return acc;
+  //     }, [] as string[]);
 
-      const groupIds = links.reduce((acc, link) => {
-        if (link.groupId && !acc.includes(link.groupId)) {
-          acc.push(link.groupId);
-        }
-        return acc;
-      }, [] as string[]);
+  //     const groupIds = links.reduce((acc, link) => {
+  //       if (link.groupId && !acc.includes(link.groupId)) {
+  //         acc.push(link.groupId);
+  //       }
+  //       return acc;
+  //     }, [] as string[]);
 
-      const userPromises = userIds.map(async (userId) => {
-        const userDoc = await getDoc(doc(db, "users", userId));
-        return { userId, userData: userDoc.data() as User };
-      });
+  //     const userPromises = userIds.map(async (userId) => {
+  //       const userDoc = await getDoc(doc(db, "users", userId));
+  //       return { userId, userData: userDoc.data() as User };
+  //     });
 
-      const groupPromises = groupIds.map(async (groupId) => {
-        const groupDoc = await getDoc(doc(db, "Groups", groupId));
-        return { groupId, groupData: groupDoc.data() as Group };
-      });
+  //     const groupPromises = groupIds.map(async (groupId) => {
+  //       const groupDoc = await getDoc(doc(db, "Groups", groupId));
+  //       return { groupId, groupData: groupDoc.data() as Group };
+  //     });
 
-      const userResults = await Promise.all(userPromises);
-      const groupResults = await Promise.all(groupPromises);
+  //     const userResults = await Promise.all(userPromises);
+  //     const groupResults = await Promise.all(groupPromises);
 
-      setUsers(
-        Object.fromEntries(
-          userResults.map(({ userId, userData }) => [userId, userData])
-        )
-      );
-      setGroups(
-        Object.fromEntries(
-          groupResults.map(({ groupId, groupData }) => [groupId, groupData])
-        )
-      );
-    };
+  //     setUsers(
+  //       Object.fromEntries(
+  //         userResults.map(({ userId, userData }) => [userId, userData])
+  //       )
+  //     );
+  //     setGroups(
+  //       Object.fromEntries(
+  //         groupResults.map(({ groupId, groupData }) => [groupId, groupData])
+  //       )
+  //     );
+  //   };
 
-    fetchUsersAndGroups();
-  }, [links]);
+  //   fetchUsersAndGroups();
+  // }, [links]);
 
   const layoutOptions = [
     { cols: 1, icon: <List size={24} /> },
