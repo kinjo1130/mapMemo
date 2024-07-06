@@ -8,6 +8,7 @@ import ReactMapGL, {
 } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Link } from "@/types/Link";
+import { X } from "lucide-react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
@@ -22,7 +23,7 @@ const Map: React.FC<MapProps> = ({ links }) => {
   const [viewState, setViewState] = useState<ViewState>({
     longitude: DEFAULT_LONGITUDE,
     latitude: DEFAULT_LATITUDE,
-    zoom: 11,
+    zoom: 9,
     bearing: 0,
     pitch: 0,
     padding: { top: 0, bottom: 0, left: 0, right: 0 },
@@ -65,7 +66,7 @@ const Map: React.FC<MapProps> = ({ links }) => {
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/streets-v11"
+        mapStyle="mapbox://styles/mapbox/streets-v11?optimize=true&language=ja"
         mapboxAccessToken={MAPBOX_TOKEN}
       >
         <GeolocateControl
@@ -93,7 +94,16 @@ const Map: React.FC<MapProps> = ({ links }) => {
               anchor="bottom"
               onClose={() => setSelectedMarker(null)}
             >
-              <div>
+              <div className="flex flex-col">
+                <div className="flex justify-end w-full">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMarker(null)}
+                    className="p-1"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
                 <h3 className="font-bold">{selectedMarker.name}</h3>
                 <p>{selectedMarker.address}</p>
               </div>
