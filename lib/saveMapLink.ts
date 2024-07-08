@@ -1,7 +1,6 @@
-import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db } from './init/firebase';
 import { SaveMapLinkParams } from '@/types/Link';
-
 
 export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
   try {
@@ -43,6 +42,27 @@ export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
     await updateDoc(doc(db, 'Links', docRef.id), {
       docId: docRef.id
     });
+
+    // usersコレクションに所属しているGroupIdを更新
+    if (groupId) {
+      const userRef = doc(db, 'users', userId);
+      await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+
+        if (!userDoc.exists()) {
+          throw new Error("ユーザードキュメントが存在しません");
+        }
+
+        const userData = userDoc.data();
+        const joinedGroups = userData.isJoinedGroups || [];
+
+        if (!joinedGroups.includes(groupId)) {
+          transaction.update(userRef, {
+            isJoinedGroups: arrayUnion(groupId)
+          });
+        }
+      });
+    }
 
     console.log('Link and place details saved to Firestore with document ID');
   } catch (error) {
