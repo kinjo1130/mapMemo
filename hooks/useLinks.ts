@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { collection, query, where, getDocs, deleteDoc, doc, limit, startAfter, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, limit, startAfter, getDoc, or } from "firebase/firestore";
 import { db } from "../lib/init/firebase";
 import { Link } from "@/types/Link";
 
@@ -15,8 +15,7 @@ export const useLinks = (linksPerPage: number) => {
     try {
       let q = query(
         collection(db, "Links"),
-        where("userId", "==", userId),
-        where("members", "array-contains", userId),
+        or(where("members", "array-contains", userId), where("userId", "==", userId)),
         limit(linksPerPage)
       );
 
