@@ -1,10 +1,12 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface Link {
   address: string;
   groupId: string;
   link: string;
   name: string;
   photoUrl: string;
-  timestamp: string;
+  timestamp: Timestamp;
   userId: string;
   docId: string;
   lat: number | null;
