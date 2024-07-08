@@ -150,7 +150,7 @@ const LinkList: React.FC<LinkListProps> = ({
                     href={link.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-dark flex items-center mb-2 underline"
+                    className="text-link hover:text-link-dark flex items-center mb-2 underline"
                   >
                     <MapPin size={16} className="mr-2 flex-shrink-0" />
                     <span>Google Map</span>

@@ -15,6 +15,11 @@ const config: Config = {
       },
       colors: {
         primary: {
+          light: '#329C5A', // blue-500
+          DEFAULT: '#2D7B51', // blue-600
+          dark: '#294B49', // blue-700
+        },
+        link:{
           light: '#3B82F6', // blue-500
           DEFAULT: '#2563EB', // blue-600
           dark: '#1D4ED8', // blue-700
