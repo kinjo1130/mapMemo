@@ -1,24 +1,21 @@
-import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db } from './init/firebase';
-import { Link } from '@/types/Link';
+import { SaveMapLinkParams } from '@/types/Link';
 
-export interface PlaceDetails {
-  name: string;
-  address: string;
-  photoUrl: string | null;
-  latitude: number | null;
-  longitude: number | null;
-}
-
-export interface SaveMapLinkParams {
-  userId: string;
-  groupId: string;
-  link: string;
-  placeDetails: PlaceDetails;
-}
-
-export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveMapLinkParams): Promise<void> => {
+export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
   try {
+    const {
+      userId,
+      groupId,
+      link,
+      placeDetails,
+      displayName,
+      userPictureUrl,
+      groupName,
+      members,
+      groupPictureUrl
+    } = params;
+
     // Firestoreに保存するデータを作成
     const linkData = {
       userId,
@@ -30,7 +27,12 @@ export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveM
       timestamp: serverTimestamp(),
       lat: placeDetails.latitude,
       lng: placeDetails.longitude,
-      isPersonal: !groupId // groupIdが空文字列の場合は個人のリンクとして扱う
+      isPersonal: !groupId,
+      displayName,
+      userPictureUrl,
+      groupName,
+      members,
+      groupPictureUrl
     };
 
     // Firestoreに保存
@@ -40,6 +42,27 @@ export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveM
     await updateDoc(doc(db, 'Links', docRef.id), {
       docId: docRef.id
     });
+
+    // usersコレクションに所属しているGroupIdを更新
+    if (groupId) {
+      const userRef = doc(db, 'users', userId);
+      await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+
+        if (!userDoc.exists()) {
+          throw new Error("ユーザードキュメントが存在しません");
+        }
+
+        const userData = userDoc.data();
+        const joinedGroups = userData.isJoinedGroups || [];
+
+        if (!joinedGroups.includes(groupId)) {
+          transaction.update(userRef, {
+            isJoinedGroups: arrayUnion(groupId)
+          });
+        }
+      });
+    }
 
     console.log('Link and place details saved to Firestore with document ID');
   } catch (error) {

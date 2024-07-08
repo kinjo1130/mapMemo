@@ -1,4 +1,4 @@
-import { db } from './init/firebase';
+import { db } from '../init/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
 export interface UserPeriod {

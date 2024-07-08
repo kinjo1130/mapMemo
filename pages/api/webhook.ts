@@ -1,13 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { client } from '../../lib/init/line';
-import { saveUserProfile } from '../../lib/saveUserProfile';
+import { saveUserProfile } from '../../lib/User/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
-import { isWithinUserPeriod } from '@/lib/checkUserPeriod';
+import { isWithinUserPeriod } from '@/lib/User/checkUserPeriod';
 import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
 import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
-import { checkUserExists } from '@/lib/checkUserExists';
+import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 
 const isGoogleMapsUrl = (url: string) => {

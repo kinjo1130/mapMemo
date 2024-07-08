@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Link } from '@/types/Link';
 import { useLinks } from '@/hooks/useLinks';
 import { useDebounce } from './useDebounce';
 
@@ -18,8 +17,10 @@ export function useSearch(userId: string) {
     const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
     return links.filter(link =>
       searchTerms.every(term =>
-        link.name.toLowerCase().includes(term) ||
-        link.address.toLowerCase().includes(term)
+        (link.name && link.name.toLowerCase().includes(term)) ||
+        (link.address && link.address.toLowerCase().includes(term)) ||
+        (link.groupName && link.groupName.toLowerCase().includes(term)) ||
+        (link.displayName && link.displayName.toLowerCase().includes(term))
       )
     );
   }, [links, searchTerm]);

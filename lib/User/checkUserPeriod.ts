@@ -1,4 +1,4 @@
-import { db } from './init/firebase';
+import { db } from '../init/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export const isWithinUserPeriod = async (userId: string, timestamp: Date): Promise<boolean> => {

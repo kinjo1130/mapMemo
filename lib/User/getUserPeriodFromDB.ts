@@ -1,4 +1,4 @@
-import { db } from './init/firebase';
+import { db } from '../init/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { UserPeriod } from './saveUserPeriod';
 

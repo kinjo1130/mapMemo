@@ -1,5 +1,5 @@
 // lib/saveUserProfile.ts
-import { db } from './init/firebase';
+import { db } from '../init/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { Profile } from '@line/bot-sdk';
 
