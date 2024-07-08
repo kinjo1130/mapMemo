@@ -1,5 +1,5 @@
 import liff from '@line/liff';
-import { saveUserProfile } from '../saveUserProfile';
+import { saveUserProfile } from '../User/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
 
 const initLiff = async (): Promise<Profile> => {

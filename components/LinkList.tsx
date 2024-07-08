@@ -3,16 +3,6 @@ import { Grid, List, MapPin, Trash2, MessageCircle, Users } from "lucide-react";
 import Toast from "./Toast";
 import { Link } from "@/types/Link";
 
-interface User {
-  displayName: string;
-  pictureUrl: string;
-}
-
-interface Group {
-  groupName: string;
-  pictureUrl: string;
-}
-
 interface LinkListProps {
   links: Link[];
   onDelete: (id: string) => Promise<void>;
@@ -160,6 +150,32 @@ const LinkList: React.FC<LinkListProps> = ({
                     <MapPin size={16} className="mr-2 flex-shrink-0" />
                     <span>Google Map</span>
                   </a>
+                  <div className="flex items-center mt-2">
+                    {link.userPictureUrl && (
+                      <img
+                        src={link.userPictureUrl}
+                        alt={link.displayName}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    )}
+                    <span className="text-sm text-neutral-dark">
+                      {link.displayName}
+                    </span>
+                  </div>
+                  {link.groupId && (
+                    <div className="flex items-center mt-2">
+                      {link.groupPictureUrl && (
+                        <img
+                          src={link.groupPictureUrl}
+                          alt={link.groupName}
+                          className="w-8 h-8 rounded-full mr-2"
+                        />
+                      )}
+                      <span className="text-sm text-neutral-dark">
+                        {link.groupName}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-2 space-y-2 sm:space-y-0">
                   <button

@@ -1,7 +1,7 @@
 import { PostbackEvent } from '@line/bot-sdk';
 import { sendReplyMessage } from './sendReplyMessage';
-import { saveUserPeriod, UserPeriod } from './saveUserPeriod';
-import { getUserPeriodFromDB } from './getUserPeriodFromDB';
+import { saveUserPeriod, UserPeriod } from './User/saveUserPeriod';
+import { getUserPeriodFromDB } from './User/getUserPeriodFromDB';
 
 export const handleUserPeriodPostback = async (event: PostbackEvent) => {
   const data = event.postback.data;

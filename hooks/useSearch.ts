@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Link } from '@/types/Link';
 import { useLinks } from '@/hooks/useLinks';
 import { useDebounce } from './useDebounce';
 
@@ -18,6 +17,7 @@ export function useSearch(userId: string) {
     const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
     return links.filter(link =>
       searchTerms.every(term =>
+        // ここに検索条件を追加していけば良さそう
         link.name.toLowerCase().includes(term) ||
         link.address.toLowerCase().includes(term)
       )

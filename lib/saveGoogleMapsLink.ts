@@ -1,10 +1,13 @@
-import { getPlaceDetails, PlaceDetails } from '@/lib/googleMaps'
-import { saveMapLink, SaveMapLinkParams } from '@/lib/saveMapLink'
+import { getPlaceDetails, PlaceDetails } from '@/lib/googleMaps';
+import { saveMapLink } from '@/lib/saveMapLink';
+import { getCurrentUser } from './User/getCurrentUser';
+import { getGroupInfo } from './Group/getGroupInfo';
+import { SaveMapLinkParams } from '@/types/Link';
 
 type SaveGoogleMapsLinkParams = {
   mapUrl: string;
   userId: string;
-  groupId: string;
+  groupId?: string;
 };
 
 type SaveGoogleMapsLinkResult = {
@@ -30,11 +33,23 @@ export async function saveGoogleMapsLink(
     const placeDetails: PlaceDetails = await getPlaceDetails(mapUrl);
     console.log(`Place details: ${JSON.stringify(placeDetails)}`);
 
-    const saveMapLinkParams = {
+    const currentUser = await getCurrentUser(userId);
+
+    let groupData = null;
+    if (groupId) {
+      groupData = await getGroupInfo(groupId, userId);
+    }
+
+    const saveMapLinkParams: SaveMapLinkParams = {
       userId,
       groupId: groupId || '',
       link: mapUrl,
-      placeDetails
+      placeDetails,
+      displayName: currentUser?.displayName || '',
+      userPictureUrl: currentUser?.pictureUrl || '',
+      groupName: groupData?.groupName || '',
+      members: groupData?.members || [],
+      groupPictureUrl: groupData?.pictureUrl || ''
     };
 
     await saveMapLink(saveMapLinkParams);

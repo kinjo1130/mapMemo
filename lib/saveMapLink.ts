@@ -1,24 +1,22 @@
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from './init/firebase';
-import { Link } from '@/types/Link';
+import { SaveMapLinkParams } from '@/types/Link';
 
-export interface PlaceDetails {
-  name: string;
-  address: string;
-  photoUrl: string | null;
-  latitude: number | null;
-  longitude: number | null;
-}
 
-export interface SaveMapLinkParams {
-  userId: string;
-  groupId: string;
-  link: string;
-  placeDetails: PlaceDetails;
-}
-
-export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveMapLinkParams): Promise<void> => {
+export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
   try {
+    const {
+      userId,
+      groupId,
+      link,
+      placeDetails,
+      displayName,
+      userPictureUrl,
+      groupName,
+      members,
+      groupPictureUrl
+    } = params;
+
     // Firestoreに保存するデータを作成
     const linkData = {
       userId,
@@ -30,7 +28,12 @@ export const saveMapLink = async ({ userId, groupId, link, placeDetails }: SaveM
       timestamp: serverTimestamp(),
       lat: placeDetails.latitude,
       lng: placeDetails.longitude,
-      isPersonal: !groupId // groupIdが空文字列の場合は個人のリンクとして扱う
+      isPersonal: !groupId,
+      displayName,
+      userPictureUrl,
+      groupName,
+      members,
+      groupPictureUrl
     };
 
     // Firestoreに保存

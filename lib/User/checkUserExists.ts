@@ -1,4 +1,4 @@
-import { db } from '../lib/init/firebase';
+import { db } from '@/lib/init/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export const checkUserExists = async (userId: string): Promise<boolean> => {
