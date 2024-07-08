@@ -8,6 +8,7 @@ export const checkUserExists = async (userId: string): Promise<boolean> => {
     return userDoc.exists();
   } catch (error) {
     console.error('Error checking user existence:', error);
-    return false;
+    throw new Error(`Error checking user existence: ${error}`);
   }
 };
+

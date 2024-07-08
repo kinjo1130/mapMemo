@@ -35,6 +35,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           await saveUserProfile(profile);
         } catch (error) {
           console.error('Error getting profile or saving user:', error);
+          await sendReplyMessage(event.replyToken, 'システムがエラーになりました。');
+          continue;
         }
       }
 
@@ -54,24 +56,46 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             console.log(`Group info: ${JSON.stringify(groupInfo)}`);
           } catch (error) {
             console.error('Error getting or fetching group info:', error);
+            await sendReplyMessage(replyToken, 'システムがエラーになりました。');
+            continue;
           }
         }
-        const userExists = await checkUserExists(userId);
-        if (!userExists) {
-          console.log(`User ${userId} is not registered`);
-          return
+
+        // ユーザーの存在チェック
+        try {
+          const userExists = await checkUserExists(userId);
+          if (!userExists) {
+            console.log(`User ${userId} is not registered`);
+            await sendReplyMessage(replyToken, `User ${userId} is not registered`);
+            continue;
+          }
+        } catch (error) {
+          console.error('Error checking user existence:', error);
+          await sendReplyMessage(replyToken, 'システムがエラーになりました。');
+          continue;
         }
 
         // 期間設定変更のチェック
         if (messageText === '保存期間変更') {
-          await sendPeriodSettingMessage(replyToken);
+          try {
+            await sendPeriodSettingMessage(replyToken);
+          } catch (error) {
+            console.error('Error sending period setting message:', error);
+            await sendReplyMessage(replyToken, 'システムがエラーになりました。');
+          }
           continue;
         }
 
         // 期間内かどうかのチェック
-        const withinPeriod = await isWithinUserPeriod(userId, timestamp);
-        if (!withinPeriod) {
-          await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
+        try {
+          const withinPeriod = await isWithinUserPeriod(userId, timestamp);
+          if (!withinPeriod) {
+            await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
+            continue;
+          }
+        } catch (error) {
+          console.error('Error checking user period:', error);
+          await sendReplyMessage(replyToken, 'システムがエラーになりました。');
           continue;
         }
 
@@ -91,7 +115,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             }
           } catch (error) {
             console.error('Error saving Google Maps link:', error);
-            await sendReplyMessage(replyToken, 'リンクの保存中にエラーが発生しました。');
+            await sendReplyMessage(replyToken, 'システムがエラーになりました。');
           }
         } else {
           console.log(`Received non-Google Maps URL: ${messageText}`);
@@ -101,7 +125,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         try {
           await handlePostbackEvent(event);
         } catch (error) {
-          await sendReplyMessage(event.replyToken, 'ポストバックイベントの処理中にエラーが発生しました。');
+          console.error('Error handling postback event:', error);
+          await sendReplyMessage(event.replyToken, 'システムがエラーになりました。');
         }
       }
 
