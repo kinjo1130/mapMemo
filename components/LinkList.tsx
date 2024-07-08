@@ -66,6 +66,11 @@ const LinkList: React.FC<LinkListProps> = ({
 
   const handleDelete = useCallback(
     async (id: string) => {
+      const userConfirmed = window.confirm(
+        "本当にこのリンクを削除してもよろしいですか？"
+      );
+      if (!userConfirmed) return;
+
       try {
         await onDelete(id);
         setToast({ message: "リンクが正常に削除されました", type: "success" });
@@ -177,7 +182,7 @@ const LinkList: React.FC<LinkListProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-2 space-y-2 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end mt-2 space-y-2 sm:space-y-0">
                   <button
                     onClick={() => handleDelete(link.docId)}
                     className="text-secondary hover:text-secondary-dark flex items-center self-end sm:self-center"
