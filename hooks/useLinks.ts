@@ -15,9 +15,12 @@ export const useLinks = (linksPerPage: number) => {
     try {
       let q = query(
         collection(db, "Links"),
-        or(where("members", "array-contains", userId), where("userId", "==", userId)),
+        or(
+          where("members", "in", [userId]),
+          where("userId", "==", userId)
+        ),
+        limit(linksPerPage)
       );
-
       if (lastDoc) {
         q = query(q, startAfter(lastDoc));
       }
