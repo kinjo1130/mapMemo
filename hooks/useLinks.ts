@@ -70,7 +70,10 @@ export const useLinks = (linksPerPage: number) => {
 
       const baseQuery = query(
         linksRef,
-        where('userId', '==', userId),
+        or(
+          where("members", "array-contains", userId),
+          where("userId", "==", userId)
+        ),
         limit(100)  // 検索のベースとなる最大件数
       );
 
