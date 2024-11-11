@@ -6,7 +6,8 @@ import Map from "@/components/Map";
 import { useProfile } from "@/hooks/useProfile";
 import { useSearch } from "@/hooks/useSearch";
 import { TabButton } from "@/components/TabButton";
-import { OctagonX } from "lucide-react";
+import { OctagonX, Search } from "lucide-react";
+import { useGroup } from "@/hooks/useGroup";
 
 type Tab = "map" | "list";
 
@@ -14,6 +15,7 @@ export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
   const { logout } = useLiff();
   const [activeTab, setActiveTab] = useState<Tab>("list");
+  const [inputValue, setInputValue] = useState(""); // 入力中の検索語を保持
 
   const {
     links,
@@ -26,13 +28,54 @@ export default function Home() {
     handleDelete,
     loadLinks,
     clearSearchTerm,
+    searchLinksByGroup
   } = useSearch(profile?.userId ?? "");
+  const {
+    groups,
+    selectedGroup,
+    handleSelectGroup
+  } = useGroup(profile?.userId ?? "");
 
   useEffect(() => {
     if (profile) {
       loadLinks(profile.userId);
     }
   }, [profile, loadLinks]);
+
+  // 検索を実行する関数
+  const executeSearch = () => {
+    if (!inputValue.trim()) {
+      // 入力が空の場合は検索をクリアして全データを再取得
+      handleClear();
+      return;
+    }
+    handleSearchInputChange(inputValue);
+  };
+
+  // クリアボタンのハンドラー
+  const handleClear = () => {
+    setInputValue("");
+    clearSearchTerm();
+    if (profile) {
+      loadLinks(profile.userId);
+    }
+  };
+
+  // Enter キーのハンドラー
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      executeSearch();
+    }
+  };
+  // グループ選択時のハンドラー
+  const handleGroupSelect = (groupId: string) => {
+    handleSelectGroup(groupId);
+    if (profile) {
+      if (groupId) {
+        searchLinksByGroup(profile.userId, groupId);
+      }
+    }
+  };
 
   if (profileLoading) {
     return <div>Loading...</div>;
@@ -56,20 +99,42 @@ export default function Home() {
         />
       </div>
       <div className="px-4 py-2 bg-white">
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedGroup?.groupId ?? ""}
+            onChange={(e)=>handleGroupSelect(e.target.value)}
+            className="w-full p-2 border rounded text-sm"
+          >
+            <option value="">すべてのグループ</option>
+            {groups?.map((group) => (
+              <option key={group.groupId} value={group.groupId}>
+                {group.groupName}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="relative flex items-center">
           <input
             type="text"
-            value={searchTerm}
-            onChange={(e) => handleSearchInputChange(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
             placeholder="検索..."
-            className="w-full p-2 border rounded"
+            className="w-full p-2 pr-20 border rounded"
           />
-          {searchTerm && (
+          {inputValue && (
             <OctagonX
-              className="absolute right-2 top-2 cursor-pointer"
-              onClick={clearSearchTerm}
+              className="absolute right-12 top-2 cursor-pointer"
+              onClick={handleClear}
             />
           )}
+          <button
+            onClick={executeSearch}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded bg-primary text-white"
+            disabled={isSearching || !inputValue}
+          >
+            <Search size={20} />
+          </button>
         </div>
       </div>
       <main className="flex-1 overflow-hidden">

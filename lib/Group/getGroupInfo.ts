@@ -1,12 +1,7 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../init/firebase';
+import { Group } from '@/types/group';
 
-interface Group {
-  groupId: string;
-  groupName: string;
-  members: string[];
-  pictureUrl?: string;
-}
 
 export const getGroupInfo = async (groupId: string, userId: string): Promise<Group | null> => {
   try {

@@ -102,7 +102,39 @@ export const useLinks = (linksPerPage: number) => {
       setIsLoading(false);
     }
   }, [linksPerPage]);
+  // 自分が所属しているグループごとにフィリタリングできるようにする
+  const searchLinksByGroup = useCallback(async (userId: string, groupId: string) => {
+    setIsLoading(true);
+    try {
+      const linksRef = collection(db, 'Links');
 
-  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinks };
+      const baseQuery = query(
+        linksRef,
+        where("members", "array-contains", userId),
+        where("groupId", "==", groupId),
+        limit(100)  // 検索のベースとなる最大件数
+      );
+
+      const querySnapshot = await getDocs(baseQuery);
+      const allLinks: Link[] = [];
+      querySnapshot.forEach((doc) => {
+        allLinks.push({ ...doc.data(), docId: doc.id } as Link);
+      });
+
+      const filteredLinks = allLinks.filter(link => {
+        return link.groupId === groupId;
+      });
+
+      setLinks(filteredLinks.slice(0, linksPerPage));
+      setHasMore(filteredLinks.length > linksPerPage);
+      setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+    } catch (error) {
+      console.error('Error searching links:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [linksPerPage]);
+
+  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinks, searchLinksByGroup };
 
 };
