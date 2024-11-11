@@ -108,13 +108,18 @@ export const useLinks = (linksPerPage: number) => {
     try {
       const linksRef = collection(db, 'Links');
 
-      const baseQuery = query(
-        linksRef,
-        where("members", "array-contains", userId),
-        where("groupId", "==", groupId),
-        limit(100)  // 検索のベースとなる最大件数
-      );
-
+      const baseQuery = groupId !== ""
+      ? query(
+          linksRef,
+          where("members", "array-contains", userId),
+          where("groupId", "==", groupId),
+          limit(100)
+        )
+      : query(
+          linksRef,
+          limit(100)
+        );
+      console.log("baseQuery", groupId !== "");
       const querySnapshot = await getDocs(baseQuery);
       const allLinks: Link[] = [];
       querySnapshot.forEach((doc) => {

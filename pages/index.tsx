@@ -70,10 +70,9 @@ export default function Home() {
   // グループ選択時のハンドラー
   const handleGroupSelect = (groupId: string) => {
     handleSelectGroup(groupId);
+    console.log("groupId", groupId);
     if (profile) {
-      if (groupId) {
-        searchLinksByGroup(profile.userId, groupId);
-      }
+      searchLinksByGroup(profile.userId, groupId);
     }
   };
 
