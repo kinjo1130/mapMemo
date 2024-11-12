@@ -7,15 +7,13 @@ const SEARCH_THRESHOLD = 20;
 const DEBOUNCE_DELAY = 300;
 
 export function useSearch(userId: string) {
-  const { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinks } =
+  const { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinks, searchLinksByGroup } =
     useLinks(LINKS_PER_PAGE);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const clearSearchTerm = useCallback(() => setSearchTerm(''), []);
 
   const filteredLinks = useMemo(() => {
-    console.log('filteredLinks', searchTerm);
-    console.log('links', links);
     if (!searchTerm) return links;
     const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
     return links.filter(link =>
@@ -52,6 +50,7 @@ export function useSearch(userId: string) {
     handleLoadMore,
     handleDelete,
     loadLinks,
-    clearSearchTerm
+    clearSearchTerm,
+    searchLinksByGroup
   };
 }
