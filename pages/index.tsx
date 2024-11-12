@@ -56,7 +56,6 @@ export default function Home() {
   const handleClear = () => {
     setInputValue("");
     clearSearchTerm();
-    console.log("selectedGroup", selectedGroup);
     if(selectedGroup){
       searchLinksByGroup(profile?.userId ?? "", selectedGroup.groupId);
     }

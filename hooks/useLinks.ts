@@ -119,9 +119,7 @@ export const useLinks = (linksPerPage: number) => {
           linksRef,
           limit(100)
         );
-      console.log("groupId", groupId);
-      console.log("userId", userId);
-      console.log("baseQuery", groupId !== "");
+
       const querySnapshot = await getDocs(baseQuery);
       const allLinks: Link[] = [];
       querySnapshot.forEach((doc) => {
