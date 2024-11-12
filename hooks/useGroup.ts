@@ -1,4 +1,4 @@
-import { Group } from "@/types/group";
+import { Group } from "@/types/Group";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "../lib/init/firebase";
