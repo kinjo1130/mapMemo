@@ -1,4 +1,3 @@
-import { getGroupInfo } from "@/lib/Group/getGroupInfo";
 import { Group } from "@/types/group";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
