@@ -56,8 +56,9 @@ export default function Home() {
   const handleClear = () => {
     setInputValue("");
     clearSearchTerm();
-    if (profile) {
-      loadLinks(profile.userId);
+    console.log("selectedGroup", selectedGroup);
+    if(selectedGroup){
+      searchLinksByGroup(profile?.userId ?? "", selectedGroup.groupId);
     }
   };
 
@@ -70,7 +71,6 @@ export default function Home() {
   // グループ選択時のハンドラー
   const handleGroupSelect = (groupId: string) => {
     handleSelectGroup(groupId);
-    console.log("groupId", groupId);
     if (profile) {
       searchLinksByGroup(profile.userId, groupId);
     }
@@ -98,7 +98,7 @@ export default function Home() {
         />
       </div>
       <div className="px-4 py-2 bg-white">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-5 mt-2">
           <select
             value={selectedGroup?.groupId ?? ""}
             onChange={(e)=>handleGroupSelect(e.target.value)}
