@@ -5,11 +5,11 @@ import Header from "@/components/Header";
 import Map from "@/components/Map";
 import { useProfile } from "@/hooks/useProfile";
 import { useSearch } from "@/hooks/useSearch";
-import { TabButton } from "@/components/TabButton";
+import { Tab, TabButton } from "@/components/TabButton";
 import { OctagonX, Search } from "lucide-react";
 import { useGroup } from "@/hooks/useGroup";
-
-type Tab = "map" | "list";
+import { CollectionListPage } from "@/features/collection/components/CollectionPage";
+// import { NewCollectionPage } from "@/features/collection/components/collection";
 
 export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
@@ -85,16 +85,23 @@ export default function Home() {
       <div className="flex space-x-2 px-4 bg-white shadow">
         <TabButton
           tab="list"
-          label="リンク一覧"
+          label="一覧"
           activeTab={activeTab}
           onClick={setActiveTab}
         />
-        <TabButton
+        {/* <TabButton
           tab="map"
           label="マップ"
           activeTab={activeTab}
           onClick={setActiveTab}
+        /> */}
+          <TabButton
+          tab="collection"
+          label="コレクション"
+          activeTab={activeTab}
+          onClick={setActiveTab}
         />
+        {/* <NewCollectionPage /> */}
       </div>
       <div className="px-4 py-2 bg-white">
         <div className="flex items-center gap-2 mb-5 mt-2">
@@ -146,6 +153,11 @@ export default function Home() {
               hasMore={hasMore && !searchTerm}
               isLoading={isLoading || isSearching}
             />
+          </div>
+        )}
+        {activeTab === "collection" && (
+          <div>
+            <CollectionListPage  />
           </div>
         )}
       </main>
