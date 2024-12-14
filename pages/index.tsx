@@ -75,10 +75,6 @@ export default function Home() {
     }
   };
 
-  if (profileLoading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <Header profile={profile} logout={logout} />

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { LogOut, X, MessageCircle } from "lucide-react";
+import { LogOut, X, MessageCircle, Bell } from "lucide-react";
 import { Profile } from "@line/bot-sdk";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 interface HeaderProps {
   profile: Profile | null;
@@ -49,12 +51,15 @@ const ProfileDetail: React.FC<{ profile: Profile; onClose: () => void; logout: (
 
 const Header: React.FC<HeaderProps> = ({ profile, logout }) => {
   const [showProfile, setShowProfile] = useState(false);
+  const router = useRouter();
 
   if (!profile) {
     return (
       <header className="bg-primary text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Map Memo</h1>
+          <h1 className="text-2xl font-bold">
+            <Link href="/">Map Memo</Link>
+          </h1>
           <div className="animate-pulse bg-white bg-opacity-50 rounded-full w-10 h-10"></div>
         </div>
       </header>
@@ -65,8 +70,19 @@ const Header: React.FC<HeaderProps> = ({ profile, logout }) => {
     <>
       <header className="bg-primary text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Map Memo</h1>
-          <button
+          <h1 className="text-2xl font-bold">
+            <Link href="/">Map Memo</Link>
+          </h1>
+       <div className="flex items-center">
+       <button
+  type="button"
+  onClick={() => {
+    router.push('/notification');
+  }}
+>
+  <Bell size={24} className="mr-4" />
+</button>
+       <button
             onClick={() => setShowProfile(true)}
             className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full"
           >
@@ -76,6 +92,7 @@ const Header: React.FC<HeaderProps> = ({ profile, logout }) => {
               className="w-10 h-10 rounded-full border-2 border-white"
             />
           </button>
+       </div>
         </div>
       </header>
       {showProfile && (
