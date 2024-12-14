@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { useLiff } from "@/hooks/useLiff";
 import LinkList from "@/components/LinkList";
 import Header from "@/components/Header";
@@ -9,12 +10,11 @@ import { Tab, TabButton } from "@/components/TabButton";
 import { OctagonX, Search } from "lucide-react";
 import { useGroup } from "@/hooks/useGroup";
 import { CollectionListPage } from "@/features/collection/components/CollectionPage";
-// import { NewCollectionPage } from "@/features/collection/components/collection";
 
 export default function Home() {
+  const router = useRouter();
   const { profile, loading: profileLoading } = useProfile();
   const { logout } = useLiff();
-  const [activeTab, setActiveTab] = useState<Tab>("list");
   const [inputValue, setInputValue] = useState(""); // 入力中の検索語を保持
 
   const {
@@ -42,6 +42,17 @@ export default function Home() {
     }
   }, [profile, loadLinks]);
 
+  // クエリパラメータからタブの状態を取得
+  const activeTab = (router.query.tab as Tab) || "list";
+
+  // タブをクリックしたときにクエリパラメータを更新
+  const handleTabClick = (tab: Tab) => {
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, tab },
+    });
+  };
+
   // 検索を実行する関数
   const executeSearch = () => {
     if (!inputValue.trim()) {
@@ -67,6 +78,7 @@ export default function Home() {
       executeSearch();
     }
   };
+
   // グループ選択時のハンドラー
   const handleGroupSelect = (groupId: string) => {
     handleSelectGroup(groupId);
@@ -87,21 +99,20 @@ export default function Home() {
           tab="list"
           label="一覧"
           activeTab={activeTab}
-          onClick={setActiveTab}
+          onClick={handleTabClick}
         />
         {/* <TabButton
           tab="map"
           label="マップ"
           activeTab={activeTab}
-          onClick={setActiveTab}
+          onClick={handleTabClick}
         /> */}
-          <TabButton
+        <TabButton
           tab="collection"
           label="コレクション"
           activeTab={activeTab}
-          onClick={setActiveTab}
+          onClick={handleTabClick}
         />
-        {/* <NewCollectionPage /> */}
       </div>
       <div className="px-4 py-2 bg-white">
         <div className="flex items-center gap-2 mb-5 mt-2">
@@ -157,7 +168,7 @@ export default function Home() {
         )}
         {activeTab === "collection" && (
           <div>
-            <CollectionListPage  />
+            <CollectionListPage />
           </div>
         )}
       </main>
