@@ -6,7 +6,7 @@ const initLiff = async (): Promise<Profile> => {
   try {
     await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
     if (!liff.isLoggedIn()) {
-      liff.login();
+      // liff.login();
     }
     const profile = await liff.getProfile();
 

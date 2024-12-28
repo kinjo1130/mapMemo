@@ -16,7 +16,6 @@ export const saveUserProfile = async (profile: Profile): Promise<void> => {
         endDate: null
       }
     }, { merge: true });
-    console.log(`User profile saved: ${profile.displayName}`);
   } catch (error) {
     console.error('Error saving user profile:', error);
     throw error;
