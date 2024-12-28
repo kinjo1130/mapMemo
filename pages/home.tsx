@@ -8,6 +8,7 @@ import { useSearch } from "@/hooks/useSearch";
 import { TabButton } from "@/components/TabButton";
 import { OctagonX, Search } from "lucide-react";
 import { useGroup } from "@/hooks/useGroup";
+import liff from "@line/liff";
 
 type Tab = "map" | "list";
 
@@ -41,6 +42,13 @@ export default function Home() {
       loadLinks(profile.userId);
     }
   }, [profile, loadLinks]);
+  useEffect(() => {
+    if (liff) {
+      if (liff.getOS() !== "web") {
+        document.title = "MapMemo";
+      }
+    }
+  }, [liff]);
 
   // 検索を実行する関数
   const executeSearch = () => {
