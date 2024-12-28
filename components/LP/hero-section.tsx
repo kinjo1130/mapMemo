@@ -18,7 +18,7 @@ export function HeroSection() {
             LINEで簡単に地図を保存・管理。あなたの大切な場所を、もっとスマートに記録しよう。
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Button size="lg" className="bg-[#2D7B51] hover:bg-[#329C5A]" href={process.env.LIFF_URL_PROD}>
+            <Button size="lg" className="bg-[#2D7B51] hover:bg-[#329C5A]" href={process.env.NEXT_PUBLIC_LINE_BOT_ADD_FRIEND_URL}>
               今すぐ始める
             </Button>
           </div>

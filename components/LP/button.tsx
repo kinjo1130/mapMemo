@@ -14,6 +14,7 @@ type ButtonProps = ButtonBaseProps &
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, size = "md", variant = "primary", href, ...props }, ref) => {
     const router = useRouter();
+    console.log("Button", href);
 
     const baseStyles = cx(
       "inline-flex items-center justify-center rounded-md font-medium transition-colors",

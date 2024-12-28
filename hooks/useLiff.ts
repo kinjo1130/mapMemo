@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import liff from '@line/liff';
+import { initLiff } from '../lib/init/liff';
+import {  useRouter } from 'next/router';
 
 export const useLiff = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const initializeLiff = async () => {
       try {
-        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID ?? '' });
-        if (liff.isLoggedIn()) {
+        const profile = await initLiff();
+        if (profile) {
           setIsAuthenticated(true);
-        } else {
-          liff.login();
         }
       } catch (error) {
         console.error("LIFF initialization failed", error);
@@ -25,7 +26,8 @@ export const useLiff = () => {
     console.log('Logging out');
     if (liff.isLoggedIn()) {
       liff.logout();
-      window.location.reload();
+      setIsAuthenticated(false); // ログアウト後に認証状態をリセット
+      router.push('/');
     }
   }
 

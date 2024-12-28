@@ -11,7 +11,7 @@ export function CTASection() {
           MapMemoで、大切な場所の記録をもっと簡単に。
           今すぐLINEで友だち追加して始めましょう。
         </p>
-        <Button size="lg" className="bg-[#2D7B51] hover:bg-[#329C5A]" href={process.env.LIFF_URL_PROD}>
+        <Button size="lg" className="bg-[#2D7B51] hover:bg-[#329C5A]" href={process.env.NEXT_PUBLIC_LINE_BOT_ADD_FRIEND_URL}>
           友だち追加する
         </Button>
       </div>
