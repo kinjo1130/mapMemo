@@ -27,7 +27,7 @@ export default function Home() {
     }
   }, [liff]);
 
- 
+
   if (profileLoading) {
     return <div>Loading...</div>;
   }

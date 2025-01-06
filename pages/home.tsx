@@ -95,14 +95,14 @@ export default function Home() {
           tab="list"
           label="リンク一覧"
           activeTab={activeTab}
-          onClick={setActiveTab}
+          onClick={() => setActiveTab("list")}
         />
-        <TabButton
+        {/* <TabButton
           tab="map"
           label="マップ"
           activeTab={activeTab}
-          onClick={setActiveTab}
-        />
+          onClick={() => setActiveTab("map")}
+        /> */}
       </div>
       <div className="px-4 py-2 bg-white">
         <div className="flex items-center gap-2 mb-5 mt-2">
