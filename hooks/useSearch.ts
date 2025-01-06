@@ -11,7 +11,6 @@ export function useSearch(userId: string) {
     useLinks(LINKS_PER_PAGE);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const clearSearchTerm = useCallback(() => setSearchTerm(''), []);
 
   const filteredLinks = useMemo(() => {
     if (!searchTerm) return links;
@@ -25,6 +24,15 @@ export function useSearch(userId: string) {
       )
     );
   }, [links, searchTerm]);
+  const clearSearchTerm = useCallback(async () => {
+    setSearchTerm('');
+    setIsSearching(true);
+    try {
+      await loadLinks(userId);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [userId, loadLinks]);
 
   const debouncedSearch = useDebounce(async (term: string) => {
     setIsSearching(true);

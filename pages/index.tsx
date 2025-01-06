@@ -1,177 +1,36 @@
-import React, { useState, useEffect } from "react";
+import  { useEffect } from "react";
 import { useRouter } from "next/router";
+import { HeroSection } from "@/components/LP/hero-section";
+import { FeaturesSection } from "@/components/LP/feature-section";
+import { HowItWorks } from "@/components/LP/how-it-works";
+import { CTASection } from "@/components/LP/cta-section";
 import { useLiff } from "@/hooks/useLiff";
-import LinkList from "@/components/LinkList";
-import Header from "@/components/Header";
-import Map from "@/components/Map";
 import { useProfile } from "@/hooks/useProfile";
-import { useSearch } from "@/hooks/useSearch";
-import { Tab, TabButton } from "@/components/TabButton";
-import { OctagonX, Search } from "lucide-react";
-import { useGroup } from "@/hooks/useGroup";
-import { CollectionListPage } from "@/features/collection/components/CollectionPage";
 
 export default function Home() {
-  const router = useRouter();
   const { profile, loading: profileLoading } = useProfile();
-  const { logout } = useLiff();
-  const [inputValue, setInputValue] = useState(""); // 入力中の検索語を保持
-
-  const {
-    links,
-    searchTerm,
-    isSearching,
-    hasMore,
-    isLoading,
-    handleSearchInputChange,
-    handleLoadMore,
-    handleDelete,
-    loadLinks,
-    clearSearchTerm,
-    searchLinksByGroup
-  } = useSearch(profile?.userId ?? "");
-  const {
-    groups,
-    selectedGroup,
-    handleSelectGroup
-  } = useGroup(profile?.userId ?? "");
+  const router = useRouter();
+  const { isAuthenticated } = useLiff();
 
   useEffect(() => {
-    if (profile) {
-      loadLinks(profile.userId);
+    if (isAuthenticated) {
+      router.push("/home");
     }
-  }, [profile, loadLinks]);
+  }, [profile]);
 
-  // クエリパラメータからタブの状態を取得
-  const activeTab = (router.query.tab as Tab) || "list";
-
-  // タブをクリックしたときにクエリパラメータを更新
-  const handleTabClick = (tab: Tab) => {
-    router.push({
-      pathname: router.pathname,
-      query: { ...router.query, tab },
-    });
-  };
-
-  // 検索を実行する関数
-  const executeSearch = () => {
-    if (!inputValue.trim()) {
-      // 入力が空の場合は検索をクリアして全データを再取得
-      handleClear();
-      return;
-    }
-    handleSearchInputChange(inputValue);
-  };
-
-  // クリアボタンのハンドラー
-  const handleClear = () => {
-    setInputValue("");
-    clearSearchTerm();
-    if(selectedGroup){
-      searchLinksByGroup(profile?.userId ?? "", selectedGroup.groupId);
-    }
-  };
-
-  // Enter キーのハンドラー
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      executeSearch();
-    }
-  };
-
-  // グループ選択時のハンドラー
-  const handleGroupSelect = (groupId: string) => {
-    handleSelectGroup(groupId);
-    if (profile) {
-      searchLinksByGroup(profile.userId, groupId);
-    }
-  };
-
+ 
   if (profileLoading) {
     return <div>Loading...</div>;
   }
 
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <Header profile={profile} logout={logout} />
-      <div className="flex space-x-2 px-4 bg-white shadow">
-        <TabButton
-          tab="list"
-          label="一覧"
-          activeTab={activeTab}
-          onClick={handleTabClick}
-        />
-        {/* <TabButton
-          tab="map"
-          label="マップ"
-          activeTab={activeTab}
-          onClick={handleTabClick}
-        /> */}
-        <TabButton
-          tab="collection"
-          label="コレクション"
-          activeTab={activeTab}
-          onClick={handleTabClick}
-        />
-      </div>
-      <div className="px-4 py-2 bg-white">
-        <div className="flex items-center gap-2 mb-5 mt-2">
-          <select
-            value={selectedGroup?.groupId ?? ""}
-            onChange={(e)=>handleGroupSelect(e.target.value)}
-            className="w-full p-2 border rounded text-sm"
-          >
-            <option value="">すべてのグループ</option>
-            {groups?.map((group) => (
-              <option key={group.groupId} value={group.groupId}>
-                {group.groupName}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="relative flex items-center">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="検索..."
-            className="w-full p-2 pr-20 border rounded"
-          />
-          {inputValue && (
-            <OctagonX
-              className="absolute right-12 top-2 cursor-pointer"
-              onClick={handleClear}
-            />
-          )}
-          <button
-            onClick={executeSearch}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded bg-primary text-white"
-            disabled={isSearching || !inputValue}
-          >
-            <Search size={20} />
-          </button>
-        </div>
-      </div>
-      <main className="flex-1 overflow-hidden">
-        {activeTab === "map" && <Map links={links} />}
-        {activeTab === "list" && (
-          <div className="h-full overflow-auto p-4">
-            <LinkList
-              links={links}
-              onDelete={handleDelete}
-              onLoadMore={handleLoadMore}
-              hasMore={hasMore && !searchTerm}
-              isLoading={isLoading || isSearching}
-            />
-          </div>
-        )}
-        {activeTab === "collection" && (
-          <div>
-            <CollectionListPage />
-          </div>
-        )}
-      </main>
-    </div>
+    <main className="min-h-screen">
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorks />
+      <CTASection />
+    </main>
   );
 }
+
