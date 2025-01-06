@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/LP/how-it-works";
 import { CTASection } from "@/components/LP/cta-section";
 import { useLiff } from "@/hooks/useLiff";
 import { useProfile } from "@/hooks/useProfile";
+import liff from "@line/liff";
 
 export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
@@ -16,7 +17,15 @@ export default function Home() {
     if (isAuthenticated) {
       router.push("/home");
     }
-  }, [profile]);
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    if (liff) {
+      if (liff.getOS() !== "web") {
+        document.title = "MapMemo";
+      }
+    }
+  }, [liff]);
 
  
   if (profileLoading) {
