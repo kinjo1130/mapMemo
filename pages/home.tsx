@@ -36,12 +36,14 @@ export default function Home() {
     selectedGroup,
     handleSelectGroup
   } = useGroup(profile?.userId ?? "");
+  const { isAuthenticated } = useLiff();
 
   useEffect(() => {
     if (profile) {
       loadLinks(profile.userId);
     }
   }, [profile, loadLinks]);
+
   useEffect(() => {
     if (liff) {
       if (liff.getOS() !== "web") {
@@ -103,6 +105,12 @@ export default function Home() {
           activeTab={activeTab}
           onClick={() => setActiveTab("map")}
         /> */}
+        {/* <TabButton
+          tab="map"
+          label="マップ"
+          activeTab={activeTab}
+          onClick={() => setActiveTab("collection")}
+        /> */}
       </div>
       <div className="px-4 py-2 bg-white">
         <div className="flex items-center gap-2 mb-5 mt-2">
@@ -126,7 +134,7 @@ export default function Home() {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="検索..."
-            className="w-full p-2 pr-20 border rounded"
+            className="w-full p-2 pr-20 border rounded text-base"
           />
           {inputValue && (
             <OctagonX
@@ -153,6 +161,7 @@ export default function Home() {
               onLoadMore={handleLoadMore}
               hasMore={hasMore && !searchTerm}
               isLoading={isLoading || isSearching}
+              userId={profile?.userId ?? ""}
             />
           </div>
         )}
