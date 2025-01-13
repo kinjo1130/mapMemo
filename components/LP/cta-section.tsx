@@ -1,6 +1,14 @@
-import { Button } from "@/components/LP/button";
 
+import { Button } from "@/components/LP/button";
+import liff from "@line/liff";
 export function CTASection() {
+  const handleButtonClick = () => {
+    if (liff.getOS() === "web") {
+      liff.login();
+    } else {
+      window.location.href = process.env.NEXT_PUBLIC_LINE_BOT_ADD_FRIEND_URL!;
+    }
+  };
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -11,7 +19,7 @@ export function CTASection() {
           MapMemoで、大切な場所の記録をもっと簡単に。
           今すぐLINEで友だち追加して始めましょう。
         </p>
-        <Button size="lg" className="bg-[#2D7B51] hover:bg-[#329C5A]" href={process.env.NEXT_PUBLIC_LINE_BOT_ADD_FRIEND_URL}>
+        <Button size="lg" className="bg-[#2D7B51] hover:bg-[#329C5A]" onClick={handleButtonClick}>
           友だち追加する
         </Button>
       </div>

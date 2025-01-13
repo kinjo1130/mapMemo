@@ -5,19 +5,25 @@ import Header from "@/components/Header";
 import Map from "@/components/Map";
 import { useProfile } from "@/hooks/useProfile";
 import { useSearch } from "@/hooks/useSearch";
-import { TabButton } from "@/components/TabButton";
+import { Tab, TabButton } from "@/components/TabButton";
 import { OctagonX, Search } from "lucide-react";
 import { useGroup } from "@/hooks/useGroup";
 import liff from "@line/liff";
+import { Collection } from "@/types/Collection";
+import CollectionDetail from "@/components/CollectionDetail";
+import { CollectionList } from "@/components/CollectionList";
+import { useRouter } from "next/router";
 
-type Tab = "map" | "list";
 
 export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
   const { logout } = useLiff();
-  const [activeTab, setActiveTab] = useState<Tab>("list");
+  const router = useRouter();
+  // URLからタブとコレクションIDを取得
+  const activeTab = (router.query.tab as Tab) || "list";
+  const collectionId = router.query.collectionId as string;
   const [inputValue, setInputValue] = useState(""); // 入力中の検索語を保持
-
+  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
   const {
     links,
     searchTerm,
@@ -36,12 +42,46 @@ export default function Home() {
     selectedGroup,
     handleSelectGroup
   } = useGroup(profile?.userId ?? "");
+  // タブ切り替え処理
+  const handleTabChange = (tab: Tab) => {
+    const query: { tab?: string; collectionId?: string } = { tab };
+    if (tab !== "collections") {
+      // コレクション以外のタブに切り替えた時はcollectionIdを削除
+      delete query.collectionId;
+    }
+    router.push({
+      pathname: router.pathname,
+      query
+    });
+  };
+  // コレクション選択処理
+  const handleCollectionSelect = (collection: Collection) => {
+    setSelectedCollection(collection);
+    router.push({
+      pathname: router.pathname,
+      query: {
+        tab: "collections",
+        collectionId: collection.collectionId
+      }
+    });
+  };
+
+  // コレクション一覧に戻る処理
+  const handleBackToCollections = () => {
+    setSelectedCollection(null);
+    router.push({
+      pathname: router.pathname,
+      query: { tab: "collections" }
+    });
+  };
+
 
   useEffect(() => {
     if (profile) {
       loadLinks(profile.userId);
     }
   }, [profile, loadLinks]);
+
   useEffect(() => {
     if (liff) {
       if (liff.getOS() !== "web") {
@@ -91,58 +131,60 @@ export default function Home() {
     <div className="flex flex-col h-screen bg-gray-100">
       <Header profile={profile} logout={logout} />
       <div className="flex space-x-2 px-4 bg-white shadow">
-        <TabButton
+      <TabButton
           tab="list"
           label="リンク一覧"
           activeTab={activeTab}
-          onClick={setActiveTab}
+          onClick={() => handleTabChange("list")}
         />
         <TabButton
-          tab="map"
-          label="マップ"
+          tab="collections"
+          label="コレクション"
           activeTab={activeTab}
-          onClick={setActiveTab}
+          onClick={() => handleTabChange("collections")}
         />
       </div>
-      <div className="px-4 py-2 bg-white">
-        <div className="flex items-center gap-2 mb-5 mt-2">
-          <select
-            value={selectedGroup?.groupId ?? ""}
-            onChange={(e)=>handleGroupSelect(e.target.value)}
-            className="w-full p-2 border rounded text-sm"
-          >
-            <option value="">すべてのグループ</option>
-            {groups?.map((group) => (
-              <option key={group.groupId} value={group.groupId}>
-                {group.groupName}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="relative flex items-center">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="検索..."
-            className="w-full p-2 pr-20 border rounded"
-          />
-          {inputValue && (
-            <OctagonX
-              className="absolute right-12 top-2 cursor-pointer"
-              onClick={handleClear}
+      {activeTab === "list" && (
+        <div className="px-4 py-2 bg-white">
+          <div className="flex items-center gap-2 mb-5 mt-2">
+            <select
+              value={selectedGroup?.groupId ?? ""}
+              onChange={(e)=>handleGroupSelect(e.target.value)}
+              className="w-full p-2 border rounded text-sm"
+            >
+              <option value="">すべてのグループ</option>
+              {groups?.map((group) => (
+                <option key={group.groupId} value={group.groupId}>
+                  {group.groupName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="検索..."
+              className="w-full p-2 pr-20 border rounded text-base"
             />
-          )}
-          <button
-            onClick={executeSearch}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded bg-primary text-white"
-            disabled={isSearching || !inputValue}
-          >
-            <Search size={20} />
-          </button>
+            {inputValue && (
+              <OctagonX
+                className="absolute right-12 top-2 cursor-pointer"
+                onClick={handleClear}
+              />
+            )}
+            <button
+              onClick={executeSearch}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded bg-primary text-white"
+              disabled={isSearching || !inputValue}
+            >
+              <Search size={20} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       <main className="flex-1 overflow-hidden">
         {activeTab === "map" && <Map links={links} />}
         {activeTab === "list" && (
@@ -153,6 +195,23 @@ export default function Home() {
               onLoadMore={handleLoadMore}
               hasMore={hasMore && !searchTerm}
               isLoading={isLoading || isSearching}
+              userId={profile?.userId ?? ""}
+            />
+          </div>
+        )}
+        {activeTab === "collections" && !collectionId && (
+          <div className="h-full overflow-auto p-4">
+            <CollectionList
+              userId={profile?.userId ?? ""}
+              onCollectionSelect={handleCollectionSelect}
+            />
+          </div>
+        )}
+        {activeTab === "collections" && collectionId && selectedCollection && (
+          <div className="h-full overflow-auto p-4">
+            <CollectionDetail
+              collection={selectedCollection}
+              onBack={handleBackToCollections}
             />
           </div>
         )}

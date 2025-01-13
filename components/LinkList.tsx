@@ -1,14 +1,16 @@
 import { useEffect, useCallback, useRef, useState } from "react";
-import { MapPin, Trash2, MessageCircle } from "lucide-react";
+import { MapPin, Trash2, MessageCircle, BookmarkPlus } from "lucide-react";
 import Toast from "./Toast";
-import { Link } from "@/types/Link";
+import CollectionModal from "./CollectionModal";
+import type { Link } from "@/types/Link";
 
 interface LinkListProps {
   links: Link[];
   onDelete: (id: string) => Promise<void>;
-  onLoadMore: () => void;
-  hasMore: boolean;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
   isLoading: boolean;
+  userId: string;
 }
 
 const LinkList: React.FC<LinkListProps> = ({
@@ -17,29 +19,31 @@ const LinkList: React.FC<LinkListProps> = ({
   onLoadMore,
   hasMore,
   isLoading,
+  userId,
 }) => {
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const lastLinkElementRef = useCallback(
-    (node: HTMLLIElement | null) => {
-      if (isLoading) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting && hasMore) {
-            onLoadMore();
-          }
-        },
-        { threshold: 0.8 }
-      );
-      if (node) observer.current.observe(node);
-    },
-    [hasMore, onLoadMore, isLoading]
-  );
+  // const lastLinkElementRef = useCallback(
+  //   (node: HTMLLIElement | null) => {
+  //     if (isLoading) return;
+  //     if (observer.current) observer.current.disconnect();
+  //     observer.current = new IntersectionObserver(
+  //       (entries) => {
+  //         if (entries[0].isIntersecting && hasMore) {
+  //           onLoadMore();
+  //         }
+  //       },
+  //       { threshold: 0.8 }
+  //     );
+  //     if (node) observer.current.observe(node);
+  //   },
+  //   [hasMore, onLoadMore, isLoading]
+  // );
 
   useEffect(() => {
     return () => {
@@ -70,6 +74,14 @@ const LinkList: React.FC<LinkListProps> = ({
     [onDelete]
   );
 
+  const handleCollectionClick = (link: Link) => {
+    setSelectedLink(link);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedLink(null);
+  };
+
   if (links.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -88,16 +100,14 @@ const LinkList: React.FC<LinkListProps> = ({
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* リンクグリッド - 画面サイズに応じて自動的にカラム数が変化 */}
       <ul className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {links.map((link, index) => (
           <li
             key={`${link.docId}-${index}`}
-            ref={index === links.length - 1 ? lastLinkElementRef : null}
+            // ref={index === links.length - 1 ? lastLinkElementRef : null}
             className="bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-xl overflow-hidden"
           >
             <div className="flex flex-col h-full">
-              {/* 画像エリア - モバイルでは大きく、デスクトップでは適度なサイズに */}
               <div className="w-full h-48 sm:h-56 relative">
                 <img
                   src={link.photoUrl || "/api/placeholder/150/150"}
@@ -107,10 +117,8 @@ const LinkList: React.FC<LinkListProps> = ({
                 />
               </div>
 
-              {/* コンテンツエリア */}
               <div className="p-4 sm:p-6 flex flex-col flex-grow">
                 <div className="flex-grow space-y-3">
-                  {/* タイトルと住所 */}
                   <div>
                     <h3 className="font-semibold text-lg sm:text-xl text-gray-900 line-clamp-2 leading-tight">
                       {link.name}
@@ -120,7 +128,6 @@ const LinkList: React.FC<LinkListProps> = ({
                     </p>
                   </div>
 
-                  {/* Google Mapリンク */}
                   <a
                     href={link.link}
                     target="_blank"
@@ -131,7 +138,6 @@ const LinkList: React.FC<LinkListProps> = ({
                     <span className="underline">Google Map</span>
                   </a>
 
-                  {/* ユーザー情報 */}
                   <div className="flex items-center space-x-3 mt-4">
                     {link.userPictureUrl && (
                       <img
@@ -146,7 +152,6 @@ const LinkList: React.FC<LinkListProps> = ({
                     </span>
                   </div>
 
-                  {/* グループ情報 */}
                   {link.groupId && (
                     <div className="flex items-center space-x-3">
                       {link.groupPictureUrl && (
@@ -164,8 +169,15 @@ const LinkList: React.FC<LinkListProps> = ({
                   )}
                 </div>
 
-                {/* 削除ボタン */}
-                <div className="flex justify-end mt-4 pt-3 border-t border-gray-100">
+                <div className="flex justify-end mt-4 pt-3 border-t border-gray-100 space-x-4">
+                  <button
+                    onClick={() => handleCollectionClick(link)}
+                    className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm group"
+                    aria-label="コレクションに追加"
+                  >
+                    <BookmarkPlus className="w-4 h-4 mr-1 group-hover:scale-110 transition-transform" />
+                    <span>コレクション</span>
+                  </button>
                   <button
                     onClick={() => handleDelete(link.docId)}
                     className="inline-flex items-center text-red-600 hover:text-red-800 text-sm group"
@@ -181,13 +193,13 @@ const LinkList: React.FC<LinkListProps> = ({
         ))}
       </ul>
 
-      {/* ローディングと「さらに読み込む」ボタン */}
       {isLoading && (
         <div className="flex justify-center items-center mt-8 text-gray-600">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
           <span>読み込み中...</span>
         </div>
       )}
+
       {!isLoading && hasMore && (
         <button
           onClick={onLoadMore}
@@ -197,7 +209,15 @@ const LinkList: React.FC<LinkListProps> = ({
         </button>
       )}
 
-      {/* トースト通知 */}
+      {selectedLink && (
+        <CollectionModal
+          isOpen={!!selectedLink}
+          onClose={handleCloseModal}
+          link={selectedLink}
+          userId={userId}
+        />
+      )}
+
       {toast && (
         <Toast
           message={toast.message}

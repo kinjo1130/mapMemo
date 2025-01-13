@@ -1,35 +1,61 @@
-import { useEffect, useState } from 'react';
+// hooks/useLiff.ts
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import liff from '@line/liff';
-import { initLiff } from '../lib/init/liff';
-import {  useRouter } from 'next/router';
+import { saveUserProfile } from '../lib/User/saveUserProfile';
 
 export const useLiff = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const initializeLiff = async () => {
+    const initialize = async () => {
       try {
-        const profile = await initLiff();
-        if (profile) {
+        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+        setIsInitialized(true);
+        
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          await saveUserProfile(profile);
           setIsAuthenticated(true);
+        } else if (router.pathname === '/home') {
+          // 未認証状態でホームページにアクセスした場合はトップページへリダイレクト
+          router.replace('/');
         }
       } catch (error) {
-        console.error("LIFF initialization failed", error);
+        console.error('LIFF initialization failed:', error);
       }
     };
 
-    initializeLiff();
-  }, []);
+    initialize();
+  }, [router.pathname]);
+
+  const login = async () => {
+    try {
+      if (!isInitialized) {
+        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+      }
+      liff.login();
+    } catch (error) {
+      console.error('Failed to login:', error);
+    }
+  };
 
   const logout = async () => {
-    console.log('Logging out');
-    if (liff.isLoggedIn()) {
-      liff.logout();
-      setIsAuthenticated(false); // ログアウト後に認証状態をリセット
-      router.push('/');
+    try {
+      await liff.logout();
+      setIsAuthenticated(false);
+      router.replace('/'); // ログアウト後にトップページへリダイレクト
+    } catch (error) {
+      console.error('Failed to logout:', error);
     }
-  }
+  };
 
-  return { isAuthenticated, logout };
-}
+  return {
+    isAuthenticated,
+    isInitialized,
+    login,
+    logout
+  };
+};

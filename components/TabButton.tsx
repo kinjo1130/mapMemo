@@ -1,6 +1,6 @@
 import React from 'react';
 
-type Tab = "map" | "list";
+export type Tab = "map" | "list" | "collections"
 
 interface TabButtonProps {
   tab: Tab;
