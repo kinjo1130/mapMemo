@@ -7,8 +7,8 @@ import type { Link } from "@/types/Link";
 interface LinkListProps {
   links: Link[];
   onDelete: (id: string) => Promise<void>;
-  onLoadMore: () => void;
-  hasMore: boolean;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
   isLoading: boolean;
   userId: string;
 }
@@ -28,22 +28,22 @@ const LinkList: React.FC<LinkListProps> = ({
   const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const lastLinkElementRef = useCallback(
-    (node: HTMLLIElement | null) => {
-      if (isLoading) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting && hasMore) {
-            onLoadMore();
-          }
-        },
-        { threshold: 0.8 }
-      );
-      if (node) observer.current.observe(node);
-    },
-    [hasMore, onLoadMore, isLoading]
-  );
+  // const lastLinkElementRef = useCallback(
+  //   (node: HTMLLIElement | null) => {
+  //     if (isLoading) return;
+  //     if (observer.current) observer.current.disconnect();
+  //     observer.current = new IntersectionObserver(
+  //       (entries) => {
+  //         if (entries[0].isIntersecting && hasMore) {
+  //           onLoadMore();
+  //         }
+  //       },
+  //       { threshold: 0.8 }
+  //     );
+  //     if (node) observer.current.observe(node);
+  //   },
+  //   [hasMore, onLoadMore, isLoading]
+  // );
 
   useEffect(() => {
     return () => {
@@ -104,7 +104,7 @@ const LinkList: React.FC<LinkListProps> = ({
         {links.map((link, index) => (
           <li
             key={`${link.docId}-${index}`}
-            ref={index === links.length - 1 ? lastLinkElementRef : null}
+            // ref={index === links.length - 1 ? lastLinkElementRef : null}
             className="bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-xl overflow-hidden"
           >
             <div className="flex flex-col h-full">

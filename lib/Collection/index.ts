@@ -1,5 +1,5 @@
 import { db } from "../../lib/init/firebase";
-import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc, startAfter, orderBy } from 'firebase/firestore';
 import type { Link } from '@/types/Link';
 import type { Collection, CollectionWithLinks } from '@/types/Collection';
 
@@ -57,4 +57,41 @@ export const isLinkInCollection = async (collectionId: string, linkId: string) =
   const linkRef = doc(db, `collections/${collectionId}/links`, linkId);
   const linkDoc = await getDoc(linkRef);
   return linkDoc.exists();
+};
+
+// ページネーションなしですべてのリンクを取得する場合の関数
+export const getAllCollectionLinks = async (collectionId: string): Promise<Link[]> => {
+  try {
+    const linksRef = collection(db, `collections/${collectionId}/links`);
+    const q = query(linksRef, orderBy('addedAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    const links: Link[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      links.push({
+        docId: doc.id,
+        address: data.address,
+        groupId: data.groupId,
+        link: data.link,
+        name: data.name,
+        photoUrl: data.photoUrl,
+        timestamp: data.timestamp,
+        userId: data.userId,
+        lat: data.lat,
+        lng: data.lng,
+        userPictureUrl: data.userPictureUrl,
+        displayName: data.displayName,
+        groupName: data.groupName,
+        groupPictureUrl: data.groupPictureUrl,
+        // addedAt: data.addedAt
+      });
+    });
+
+    return links;
+
+  } catch (error) {
+    console.error('Error getting all collection links:', error);
+    throw error;
+  }
 };

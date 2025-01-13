@@ -5,19 +5,28 @@ import Header from "@/components/Header";
 import Map from "@/components/Map";
 import { useProfile } from "@/hooks/useProfile";
 import { useSearch } from "@/hooks/useSearch";
-import { TabButton } from "@/components/TabButton";
+import { Tab, TabButton } from "@/components/TabButton";
 import { OctagonX, Search } from "lucide-react";
 import { useGroup } from "@/hooks/useGroup";
 import liff from "@line/liff";
+import { Collection } from "@/types/Collection";
+import CollectionDetail from "@/components/CollectionDetail";
+import { CollectionList } from "@/components/CollectionList";
 
-type Tab = "map" | "list";
 
 export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
   const { logout } = useLiff();
   const [activeTab, setActiveTab] = useState<Tab>("list");
   const [inputValue, setInputValue] = useState(""); // 入力中の検索語を保持
+  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const handleCollectionSelect = (collection: Collection) => {
+    setSelectedCollection(collection);
+  };
 
+  const handleBackToCollections = () => {
+    setSelectedCollection(null);
+  };
   const {
     links,
     searchTerm,
@@ -105,12 +114,12 @@ export default function Home() {
           activeTab={activeTab}
           onClick={() => setActiveTab("map")}
         /> */}
-        {/* <TabButton
-          tab="map"
-          label="マップ"
+       <TabButton
+          tab="collections"
+          label="コレクション"
           activeTab={activeTab}
-          onClick={() => setActiveTab("collection")}
-        /> */}
+          onClick={() => setActiveTab("collections")}
+        />
       </div>
       <div className="px-4 py-2 bg-white">
         <div className="flex items-center gap-2 mb-5 mt-2">
@@ -162,6 +171,22 @@ export default function Home() {
               hasMore={hasMore && !searchTerm}
               isLoading={isLoading || isSearching}
               userId={profile?.userId ?? ""}
+            />
+          </div>
+        )}
+         {activeTab === "collections" && !selectedCollection && (
+          <div className="h-full overflow-auto p-4">
+            <CollectionList
+              userId={profile?.userId ?? ""}
+              onCollectionSelect={handleCollectionSelect}
+            />
+          </div>
+        )}
+        {activeTab === "collections" && selectedCollection && (
+          <div className="h-full overflow-auto p-4">
+            <CollectionDetail
+              collection={selectedCollection}
+              onBack={handleBackToCollections}
             />
           </div>
         )}
