@@ -1,7 +1,7 @@
 import { db } from "../../lib/init/firebase";
-import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc, startAfter, orderBy } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc, startAfter, orderBy, updateDoc } from 'firebase/firestore';
 import type { Link } from '@/types/Link';
-import type { Collection, CollectionWithLinks } from '@/types/Collection';
+import type { Collection, CollectionUser, CollectionWithLinks } from '@/types/Collection';
 
 // コレクションの作成
 export const createCollection = async (userId: string, title: string, isPublic: boolean) => {
@@ -94,4 +94,164 @@ export const getAllCollectionLinks = async (collectionId: string): Promise<Link[
     console.error('Error getting all collection links:', error);
     throw error;
   }
+};
+
+// コレクションの共有状態を更新
+export const updateCollectionShare = async (collectionId: string, isPublic: boolean) => {
+  const collectionRef = doc(db, `collections/${collectionId}`);
+  await updateDoc(collectionRef, {
+    isPublic,
+    updatedAt: serverTimestamp()
+  });
+};
+
+// 共有コレクションの取得
+export const getSharedCollection = async (collectionId: string) => {
+  const collectionRef = doc(db, `collections/${collectionId}`);
+  const collectionSnap = await getDoc(collectionRef);
+
+  if (!collectionSnap.exists()) {
+    throw new Error('Collection not found');
+  }
+
+  const collection = collectionSnap.data() as Collection;
+  
+  if (!collection.isPublic) {
+    throw new Error('This collection is private');
+  }
+
+  return collection;
+};
+
+// 共有URLの生成
+export const generateShareURL = (collectionId: string) => {
+  // 現在のホストURLを取得
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/collections/share/${collectionId}`;
+};
+// lib/Collection.ts
+
+// ユーザーをコレクションに追加
+export const addUserToCollection = async (
+  collectionId: string,
+  userId: string,
+  role: 'editor' | 'viewer' = 'viewer'
+) => {
+  const collectionRef = doc(db, `collections/${collectionId}`);
+  const collectionDoc = await getDoc(collectionRef);
+  
+  if (!collectionDoc.exists()) {
+    throw new Error('Collection not found');
+  }
+
+  const collection = collectionDoc.data();
+  const users = collection.users || [];
+  
+  // すでに追加されているユーザーはスキップ
+  if (users.some((user: CollectionUser) => user.uid === userId)) {
+    return;
+  }
+
+  await updateDoc(collectionRef, {
+    users: [...users, {
+      uid: userId,
+      role,
+      addedAt: serverTimestamp()
+    }],
+    updatedAt: serverTimestamp()
+  });
+};
+
+// コレクションのコピーを作成
+export const copyCollection = async (
+  sourceCollectionId: string,
+  userId: string,
+  newTitle?: string
+) => {
+  // 元のコレクション情報を取得
+  const sourceCollectionRef = doc(db, `collections/${sourceCollectionId}`);
+  const sourceCollectionDoc = await getDoc(sourceCollectionRef);
+  
+  if (!sourceCollectionDoc.exists()) {
+    throw new Error('Source collection not found');
+  }
+
+  // 新しいコレクションを作成
+  const title = newTitle || `${sourceCollectionDoc.data().title} (コピー)`;
+  const newCollectionId = await createCollection(userId, title, false);
+
+  // リンクをコピー
+  const sourceLinks = await getAllCollectionLinks(sourceCollectionId);
+  const copyPromises = sourceLinks.map(link => 
+    addLinkToCollection(newCollectionId, link)
+  );
+  
+  await Promise.all(copyPromises);
+  
+  return newCollectionId;
+};
+
+// コレクションのユーザー権限を更新
+export const updateUserRole = async (
+  collectionId: string,
+  userId: string,
+  newRole: 'editor' | 'viewer'
+) => {
+  const collectionRef = doc(db, `collections/${collectionId}`);
+  const collectionDoc = await getDoc(collectionRef);
+  
+  if (!collectionDoc.exists()) {
+    throw new Error('Collection not found');
+  }
+
+  const collection = collectionDoc.data();
+  const users = collection.users || [];
+  
+  const updatedUsers = users.map((user: CollectionUser) => 
+    user.uid === userId ? { ...user, role: newRole } : user
+  );
+
+  await updateDoc(collectionRef, {
+    users: updatedUsers,
+    updatedAt: serverTimestamp()
+  });
+};
+
+// コレクションからユーザーを削除
+export const removeUserFromCollection = async (
+  collectionId: string,
+  userId: string
+) => {
+  const collectionRef = doc(db, `collections/${collectionId}`);
+  const collectionDoc = await getDoc(collectionRef);
+  
+  if (!collectionDoc.exists()) {
+    throw new Error('Collection not found');
+  }
+
+  const collection = collectionDoc.data();
+  const users = collection.users || [];
+  
+  const updatedUsers = users.filter((user: CollectionUser) => user.uid !== userId);
+
+  await updateDoc(collectionRef, {
+    users: updatedUsers,
+    updatedAt: serverTimestamp()
+  });
+};
+
+// コレクションを取得
+export const getCollectionById = async (collectionId: string) => {
+  const collectionRef = doc(db, `collections/${collectionId}`);
+  const collectionDoc = await getDoc(collectionRef);
+  
+  if (!collectionDoc.exists()) {
+    return null;
+  }
+
+  const data = collectionDoc.data();
+  return {
+    ...data,
+    collectionId: collectionDoc.id
+  } as Collection;
 };

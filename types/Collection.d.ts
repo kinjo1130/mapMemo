@@ -63,3 +63,26 @@ interface CollectionError {
   message: string;
   status: 403 | 404 | 401;
 }
+
+export interface CollectionUser {
+  uid: string;
+  role: 'owner' | 'editor' | 'viewer';
+  addedAt: any; // Timestamp
+}
+
+export interface Collection {
+  collectionId: string;
+  title: string;
+  uid: string;
+  isPublic: boolean;
+  createdAt: any; // Timestamp
+  updatedAt: any; // Timestamp
+  users?: CollectionUser[]; // 共同編集者リスト
+}
+
+export interface CollectionAction {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  show?: boolean;
+}

@@ -2,10 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getAllCollectionLinks } from '@/lib/Collection';
 import type {  Link } from '@/types/Link';
 import type {Collection} from '@/types/Collection';
-import { ArrowLeft, Share2, Settings } from 'lucide-react';
+import { ArrowLeft, Share2, Settings, Users } from 'lucide-react';
 import LinkList from './LinkList';
 import { db } from '@/lib/init/firebase';
 import { deleteDoc, doc } from 'firebase/firestore';
+import ShareButton from './ShareSettings';
+import ShareSettings from './ShareSettings';
+import InviteModal from './InviteModal';
 
 interface CollectionDetailProps {
   collection: Collection;
@@ -15,6 +18,7 @@ interface CollectionDetailProps {
 export const CollectionDetail: React.FC<CollectionDetailProps> = ({ collection, onBack }) => {
   const [links, setLinks] = useState<Link[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   useEffect(() => {
     loadCollectionLinks();
@@ -39,6 +43,10 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ collection, 
       throw error;
     }
   }, []);
+  const handleCollectionUpdate = async () => {
+    // コレクション情報を再取得する必要がある場合はここで実行
+    await loadCollectionLinks();
+  };
 
   return (
     <div>
@@ -53,14 +61,18 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ collection, 
             戻る
           </button>
           <div className="flex items-center space-x-2">
-            {collection.isPublic && (
-              <button className="text-gray-600 hover:text-blue-600">
-                <Share2 className="w-5 h-5" />
-              </button>
-            )}
-            <button className="text-gray-600 hover:text-gray-800">
-              <Settings className="w-5 h-5" />
+          <div className="flex items-center space-x-2">
+            {/* 招待ボタンを追加 */}
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="text-gray-600 hover:text-blue-600"
+              title="メンバーを招待"
+            >
+              <Users className="w-5 h-5" />
             </button>
+            <ShareSettings collection={collection} onUpdate={handleCollectionUpdate} />
+          </div>
+           
           </div>
         </div>
         <h2 className="text-2xl font-bold">{collection.title}</h2>
@@ -84,6 +96,14 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ collection, 
         userId={collection.uid}
       />
       )}
+
+      {/* 招待モーダルを追加 */}
+      <InviteModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        collection={collection}
+        onUpdate={handleCollectionUpdate}
+      />
     </div>
   );
 };

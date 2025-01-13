@@ -1,4 +1,4 @@
-import  { useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { HeroSection } from "@/components/LP/hero-section";
 import { FeaturesSection } from "@/components/LP/feature-section";
@@ -14,7 +14,8 @@ export default function Home() {
   const { isAuthenticated } = useLiff();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // ユーザーが認証済みで、かつLPページにいる場合のみホームページにリダイレクト
+    if (isAuthenticated && router.pathname === '/') {
       router.push("/home");
     }
   }, [isAuthenticated, router]);
@@ -27,19 +28,23 @@ export default function Home() {
     }
   }, [liff]);
 
-
+  // ローディング中はローディング表示
   if (profileLoading) {
     return <div>Loading...</div>;
   }
 
+  // 未認証の場合はLPを表示
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen">
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorks />
+        <CTASection />
+      </main>
+    );
+  }
 
-  return (
-    <main className="min-h-screen">
-      <HeroSection />
-      <FeaturesSection />
-      <HowItWorks />
-      <CTASection />
-    </main>
-  );
+  // 認証済みの場合は何も表示せず（useEffectでリダイレクトされる）
+  return null;
 }
-

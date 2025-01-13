@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createCollection, getCollections } from '@/lib/Collection';
 import type { Collection } from '@/types/Collection';
 import { Plus, Share2, Globe, Lock } from 'lucide-react';
+import { formatDate } from '@/utils/date';
 
 interface CollectionListProps {
   userId: string;
@@ -104,20 +105,20 @@ export const CollectionList: React.FC<CollectionListProps> = ({ userId, onCollec
             <div className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium text-lg">{collection.title}</h3>
-                {collection.isPublic ? (
+                {/* {collection.isPublic ? (
                   <Globe className="w-4 h-4 text-gray-500" />
                 ) : (
                   <Lock className="w-4 h-4 text-gray-500" />
-                )}
+                )} */}
               </div>
               {/* {collection.description && (
                 <p className="text-gray-600 text-sm mb-4">{collection.description}</p>
               )} */}
               <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>作成日: {new Date(collection.createdAt).toLocaleDateString()}</span>
-                {collection.isPublic && (
+              <span>作成日: {formatDate(collection.createdAt)}</span>
+                {/* {collection.isPublic && (
                   <Share2 className="w-4 h-4 hover:text-blue-600" />
-                )}
+                )} */}
               </div>
             </div>
           </div>
