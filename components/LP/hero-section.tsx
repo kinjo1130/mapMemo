@@ -9,7 +9,7 @@ export function HeroSection() {
     if (liff.getOS() === "web") {
       liff.login();
     } else {
-      // window.location.href = process.env.NEXT_PUBLIC_LINE_BOT_ADD_FRIEND_URL!;
+      window.location.href = process.env.NEXT_PUBLIC_LINE_BOT_ADD_FRIEND_URL!;
     }
   };
   return (
