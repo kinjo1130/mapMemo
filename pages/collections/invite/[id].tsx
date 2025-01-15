@@ -1,4 +1,3 @@
-// pages/collections/invite/[id].tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useProfile } from '@/hooks/useProfile';
@@ -41,13 +40,28 @@ const CollectionInvitePage = () => {
       try {
         // すでにメンバーかチェック
         if (collection.users?.some((user: any) => user.uid === profile.userId)) {
-          router.replace(`/collections/${id}`);
+          // コレクション詳細画面に遷移
+          router.replace({
+            pathname: '/home',
+            query: {
+              tab: 'collections',
+              collectionId: id
+            }
+          });
           return;
         }
 
         // メンバーとして追加
         await addUserToCollection(id as string, profile.userId, 'viewer');
-        router.replace(`/collections/${id}`);
+        
+        // コレクション詳細画面に遷移
+        router.replace({
+          pathname: '/home',
+          query: {
+            tab: 'collections',
+            collectionId: id
+          }
+        });
       } catch (error) {
         setError('コレクションへの参加に失敗しました');
       }

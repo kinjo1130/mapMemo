@@ -14,9 +14,30 @@ export default function Home() {
   const { isAuthenticated } = useLiff();
 
   useEffect(() => {
-    // ユーザーが認証済みで、かつLPページにいる場合のみホームページにリダイレクト
+    // セッションストレージからリダイレクト先を確認
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    
+    // 認証済みで、かつLPページにいる場合の処理
     if (isAuthenticated && router.pathname === '/') {
-      router.push("/home");
+      if (redirectPath) {
+        // リダイレクト先が保存されている場合は、そちらを優先
+        const collectionId = redirectPath.split('/').pop();
+        if (redirectPath.includes('/collections/share/') || redirectPath.includes('/collections/invite/')) {
+          router.replace({
+            pathname: '/home',
+            query: {
+              tab: 'collections',
+              collectionId
+            }
+          });
+        } else {
+          router.replace(redirectPath);
+        }
+        sessionStorage.removeItem('redirectPath');
+      } else {
+        // リダイレクト先がない場合は通常通りホームへ
+        router.replace("/home");
+      }
     }
   }, [isAuthenticated, router]);
 

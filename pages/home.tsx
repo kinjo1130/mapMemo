@@ -13,17 +13,18 @@ import { Collection } from "@/types/Collection";
 import CollectionDetail from "@/components/CollectionDetail";
 import { CollectionList } from "@/components/CollectionList";
 import { useRouter } from "next/router";
-
+import { getCollectionById } from '@/lib/Collection'; // Collectionライブラリをインポート
 
 export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
   const { logout } = useLiff();
   const router = useRouter();
-  // URLからタブとコレクションIDを取得
   const activeTab = (router.query.tab as Tab) || "list";
   const collectionId = router.query.collectionId as string;
-  const [inputValue, setInputValue] = useState(""); // 入力中の検索語を保持
+  const [inputValue, setInputValue] = useState("");
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const [isLoadingCollection, setIsLoadingCollection] = useState(false);
+
   const {
     links,
     searchTerm,
@@ -37,23 +38,53 @@ export default function Home() {
     clearSearchTerm,
     searchLinksByGroup
   } = useSearch(profile?.userId ?? "");
+
   const {
     groups,
     selectedGroup,
     handleSelectGroup
   } = useGroup(profile?.userId ?? "");
+
+  // コレクションデータの取得
+  useEffect(() => {
+    const fetchCollection = async () => {
+      if (!collectionId) {
+        setSelectedCollection(null);
+        return;
+      }
+
+      try {
+        setIsLoadingCollection(true);
+        const collection = await getCollectionById(collectionId);
+        if (collection) {
+          setSelectedCollection(collection);
+        }
+      } catch (error) {
+        console.error('Failed to fetch collection:', error);
+      } finally {
+        setIsLoadingCollection(false);
+      }
+    };
+
+    // router.isReadyを確認してからフェッチを実行
+    if (router.isReady) {
+      fetchCollection();
+    }
+  }, [collectionId, router.isReady]);
+
   // タブ切り替え処理
   const handleTabChange = (tab: Tab) => {
     const query: { tab?: string; collectionId?: string } = { tab };
     if (tab !== "collections") {
-      // コレクション以外のタブに切り替えた時はcollectionIdを削除
       delete query.collectionId;
+      setSelectedCollection(null);
     }
     router.push({
       pathname: router.pathname,
       query
     });
   };
+
   // コレクション選択処理
   const handleCollectionSelect = (collection: Collection) => {
     setSelectedCollection(collection);
@@ -74,7 +105,6 @@ export default function Home() {
       query: { tab: "collections" }
     });
   };
-
 
   useEffect(() => {
     if (profile) {
@@ -131,7 +161,7 @@ export default function Home() {
     <div className="flex flex-col h-screen bg-gray-100">
       <Header profile={profile} logout={logout} />
       <div className="flex space-x-2 px-4 bg-white shadow">
-      <TabButton
+        <TabButton
           tab="list"
           label="リンク一覧"
           activeTab={activeTab}
@@ -207,12 +237,22 @@ export default function Home() {
             />
           </div>
         )}
-        {activeTab === "collections" && collectionId && selectedCollection && (
+        {activeTab === "collections" && collectionId && (
           <div className="h-full overflow-auto p-4">
-            <CollectionDetail
-              collection={selectedCollection}
-              onBack={handleBackToCollections}
-            />
+            {isLoadingCollection ? (
+              <div className="flex justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : selectedCollection ? (
+              <CollectionDetail
+                collection={selectedCollection}
+                onBack={handleBackToCollections}
+              />
+            ) : (
+              <div className="text-center py-4">
+                コレクションが見つかりません
+              </div>
+            )}
           </div>
         )}
       </main>
