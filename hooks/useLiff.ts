@@ -69,7 +69,7 @@ export const useLiff = () => {
         // クエリパラメータを含むパスを構築
         const pathWithQuery = `home?tab=collections&collectionId=${collectionId}`;
         
-        liff.login({ redirectUri: `https://0655-2400-4153-c541-3a10-8f-7402-ee3b-5153.ngrok-free.app/${pathWithQuery}` });
+        liff.login({ redirectUri: `${baseUrl}/${pathWithQuery}` });
         return;
       }
       liff.login();
