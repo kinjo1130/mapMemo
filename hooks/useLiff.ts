@@ -36,7 +36,11 @@ export const useLiff = () => {
       if (!isInitialized) {
         await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
       }
-      liff.login();
+      const isDev = process.env.NODE_ENV === 'development';
+     const baseUrl = isDev ? process.env.NEXT_PUBLIC_LIFF_URL_DEV : process.env.NEXT_PUBLIC_LIFF_URL_PROD;
+     liff.login({
+        redirectUri: `${process.env.NEXT_PUBLIC_BASE_URL}/home`
+      });
     } catch (error) {
       console.error('Failed to login:', error);
     }

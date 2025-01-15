@@ -126,7 +126,8 @@ export const getSharedCollection = async (collectionId: string) => {
 // 共有URLの生成
 export const generateShareURL = (collectionId: string) => {
   // 現在のホストURLを取得
-  const baseUrl = window.location.origin;
+  const isDev = process.env.NODE_ENV === 'development';
+  const baseUrl = isDev ? process.env.NEXT_PUBLIC_LIFF_URL_DEV : process.env.NEXT_PUBLIC_LIFF_URL_PROD;
   return `${baseUrl}/collections/share/${collectionId}`;
 };
 // lib/Collection.ts

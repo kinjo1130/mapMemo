@@ -19,7 +19,8 @@ const InviteModal: React.FC<InviteModalProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [inviteLink] = useState(() => {
-    const baseUrl = window.location.origin;
+    const isDev = process.env.NODE_ENV === 'development';
+    const baseUrl = isDev ? process.env.NEXT_PUBLIC_LIFF_URL_DEV : process.env.NEXT_PUBLIC_LIFF_URL_PROD;
     return `${baseUrl}/collections/invite/${collection.collectionId}`;
   });
 
