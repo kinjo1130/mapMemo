@@ -19,8 +19,31 @@ export const useLiff = () => {
           const profile = await liff.getProfile();
           await saveUserProfile(profile);
           setIsAuthenticated(true);
+          
+          // redirectPathの処理を改善
+          const redirectPath = sessionStorage.getItem('redirectPath');
+          if (redirectPath) {
+            // コレクションIDを抽出
+            const collectionId = redirectPath.split('/').pop();
+            if (redirectPath.includes('/collections/share/') || redirectPath.includes('/collections/invite/')) {
+              // シェアまたは招待URLの場合、コレクション詳細画面に遷移
+              sessionStorage.removeItem('redirectPath');
+              router.replace({
+                pathname: '/home',
+                query: {
+                  tab: 'collections',
+                  collectionId
+                }
+              });
+            } else {
+              // その他のリダイレクトパスの場合
+              sessionStorage.removeItem('redirectPath');
+              router.replace(redirectPath);
+            }
+          } else if (router.pathname === '/') {
+            router.replace('/home');
+          }
         } else if (router.pathname === '/home') {
-          // 未認証状態でホームページにアクセスした場合はトップページへリダイレクト
           router.replace('/');
         }
       } catch (error) {
@@ -31,10 +54,23 @@ export const useLiff = () => {
     initialize();
   }, [router.pathname]);
 
-  const login = async () => {
+  const login = async (redirectPath?: string) => {
     try {
       if (!isInitialized) {
         await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+      }
+      if (redirectPath) {
+        sessionStorage.setItem('redirectPath', redirectPath);
+        const isDev = process.env.NODE_ENV === 'development';
+        const baseUrl = isDev ? process.env.NEXT_PUBLIC_LIFF_URL_DEV : process.env.NEXT_PUBLIC_LIFF_URL_PROD;
+  
+        // /collections/invite/:idからコレクションIDを抽出
+        const collectionId = redirectPath.split('/').pop();
+        // クエリパラメータを含むパスを構築
+        const pathWithQuery = `home?tab=collections&collectionId=${collectionId}`;
+        
+        liff.login({ redirectUri: `${baseUrl}/${pathWithQuery}` });
+        return;
       }
       liff.login();
     } catch (error) {
@@ -46,7 +82,8 @@ export const useLiff = () => {
     try {
       await liff.logout();
       setIsAuthenticated(false);
-      router.replace('/'); // ログアウト後にトップページへリダイレクト
+      sessionStorage.removeItem('redirectPath');
+      router.replace('/');
     } catch (error) {
       console.error('Failed to logout:', error);
     }

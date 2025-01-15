@@ -5,6 +5,7 @@ import { getSharedCollection, getAllCollectionLinks } from '@/lib/Collection';
 import type { Collection } from '@/types/Collection';
 import type { Link } from '@/types/Link';
 import { ArrowLeft } from 'lucide-react';
+import { formatDate } from '@/utils/date';
 
 const SharedCollectionPage = () => {
   const router = useRouter();
@@ -81,7 +82,7 @@ const SharedCollectionPage = () => {
             {collection.title}
           </h1>
           <div className="text-sm text-gray-500">
-            作成日: {new Date(collection.createdAt).toLocaleDateString()}
+            作成日: {formatDate(collection.createdAt)}
           </div>
         </div>
 
