@@ -1,5 +1,5 @@
 import { db } from "../../lib/init/firebase";
-import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc, startAfter, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc, startAfter, orderBy, updateDoc, Timestamp } from 'firebase/firestore';
 import type { Link } from '@/types/Link';
 import type { Collection, CollectionUser, CollectionWithLinks } from '@/types/Collection';
 
@@ -157,9 +157,9 @@ export const addUserToCollection = async (
     users: [...users, {
       uid: userId,
       role,
-      addedAt: serverTimestamp()
+      addedAt: Timestamp.now()
     }],
-    updatedAt: serverTimestamp()
+    updatedAt: Timestamp.now()
   });
 };
 

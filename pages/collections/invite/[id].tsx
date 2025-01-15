@@ -113,7 +113,7 @@ const CollectionInvitePage = () => {
             </p>
           </div>
           <button
-            onClick={() => login()}
+            onClick={() => login(`home?tab=collections&collectionId=${id}`)}
             className="w-full bg-[#00B900] text-white rounded-lg py-3 px-4 flex items-center justify-center gap-2 hover:bg-[#009C00] transition-colors"
           >
             LINEでログイン

@@ -61,6 +61,16 @@ export const useLiff = () => {
       }
       if (redirectPath) {
         sessionStorage.setItem('redirectPath', redirectPath);
+        const isDev = process.env.NODE_ENV === 'development';
+        const baseUrl = isDev ? process.env.NEXT_PUBLIC_LIFF_URL_DEV : process.env.NEXT_PUBLIC_LIFF_URL_PROD;
+  
+        // /collections/invite/:idからコレクションIDを抽出
+        const collectionId = redirectPath.split('/').pop();
+        // クエリパラメータを含むパスを構築
+        const pathWithQuery = `home?tab=collections&collectionId=${collectionId}`;
+        
+        liff.login({ redirectUri: `https://0655-2400-4153-c541-3a10-8f-7402-ee3b-5153.ngrok-free.app/${pathWithQuery}` });
+        return;
       }
       liff.login();
     } catch (error) {
