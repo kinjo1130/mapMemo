@@ -31,13 +31,10 @@ export const getCollections = async (userId: string) => {
     collectionsRef,
     where('uid', '==', userId)
   );
-  console.log('uid', userId);
   const q2 = query(
     collectionsRef,
-    where('userIds', 'array-contains', { uid: userId })
+    where('userIds', 'array-contains', userId)
   );
-  console.log('q', q);
-  console.log('q2', q2);
 
   const [ownedSnapshot, participatingSnapshot] = await Promise.all([
     getDocs(q),
