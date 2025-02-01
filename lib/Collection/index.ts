@@ -34,7 +34,7 @@ export const getCollections = async (userId: string) => {
   console.log('uid', userId);
   const q2 = query(
     collectionsRef,
-    where('users', 'array-contains', { uid: userId })
+    where('userIds', 'array-contains', { uid: userId })
   );
   console.log('q', q);
   console.log('q2', q2);
@@ -179,7 +179,7 @@ export const addUserToCollection = async (
     return;
   }
 
-  // ユーザーを追加する関数（関数名は実際のコードに合わせてください）
+  // ユーザーを追加する関数
   const userProfile = await getCurrentUser(userId);
   if (!userProfile) {
     throw new Error('ユーザー情報の取得に失敗しました');
