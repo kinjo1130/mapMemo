@@ -1,13 +1,14 @@
 import { db } from "../../lib/init/firebase";
-import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc, startAfter, orderBy, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, getDocs, query, where, serverTimestamp, getDoc, startAfter, orderBy, updateDoc, Timestamp, arrayUnion } from 'firebase/firestore';
 import type { Link } from '@/types/Link';
 import type { Collection, CollectionUser, CollectionWithLinks } from '@/types/Collection';
+import { getCurrentUser } from "../User/getCurrentUser";
 
 // コレクションの作成
 export const createCollection = async (userId: string, title: string, isPublic: boolean) => {
   const collectionsRef = collection(db, 'collections');
   const newCollectionRef = doc(collectionsRef);
-  
+
   await setDoc(newCollectionRef, {
     title,
     uid: userId,
@@ -16,7 +17,7 @@ export const createCollection = async (userId: string, title: string, isPublic: 
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-  
+
   return newCollectionRef.id;
 };
 
@@ -24,25 +25,28 @@ export const createCollection = async (userId: string, title: string, isPublic: 
 
 export const getCollections = async (userId: string) => {
   const collectionsRef = collection(db, 'collections');
-  
+
   // 所有しているコレクションとユーザーが参加しているコレクションの両方を取得
   const q = query(
     collectionsRef,
     where('uid', '==', userId)
   );
+  console.log('uid', userId);
   const q2 = query(
     collectionsRef,
     where('users', 'array-contains', { uid: userId })
   );
-  
+  console.log('q', q);
+  console.log('q2', q2);
+
   const [ownedSnapshot, participatingSnapshot] = await Promise.all([
     getDocs(q),
     getDocs(q2)
   ]);
-  
+
   // 両方の結果を結合して重複を除去
   const collections = new Map();
-  
+
   [...ownedSnapshot.docs, ...participatingSnapshot.docs].forEach(doc => {
     if (!collections.has(doc.id)) {
       const data = doc.data() as Collection;
@@ -52,7 +56,7 @@ export const getCollections = async (userId: string) => {
       });
     }
   });
-  
+
   return Array.from(collections.values());
 };
 
@@ -60,7 +64,7 @@ export const getCollections = async (userId: string) => {
 // コレクションへのリンク追加
 export const addLinkToCollection = async (collectionId: string, link: Link) => {
   const linkRef = doc(db, `collections/${collectionId}/links/${link.docId}`);
-  
+
   await setDoc(linkRef, {
     ...link,
     addedAt: serverTimestamp(),
@@ -87,7 +91,7 @@ export const getAllCollectionLinks = async (collectionId: string): Promise<Link[
     const linksRef = collection(db, `collections/${collectionId}/links`);
     const q = query(linksRef, orderBy('addedAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    
+
     const links: Link[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
@@ -137,7 +141,7 @@ export const getSharedCollection = async (collectionId: string) => {
   }
 
   const collection = collectionSnap.data() as Collection;
-  
+
   if (!collection.isPublic) {
     throw new Error('This collection is private');
   }
@@ -162,26 +166,41 @@ export const addUserToCollection = async (
 ) => {
   const collectionRef = doc(db, `collections/${collectionId}`);
   const collectionDoc = await getDoc(collectionRef);
-  
+
   if (!collectionDoc.exists()) {
     throw new Error('Collection not found');
   }
 
   const collection = collectionDoc.data();
   const users = collection.users || [];
-  
+
   // すでに追加されているユーザーはスキップ
   if (users.some((user: CollectionUser) => user.uid === userId)) {
     return;
   }
 
+  // ユーザーを追加する関数（関数名は実際のコードに合わせてください）
+  const userProfile = await getCurrentUser(userId);
+  if (!userProfile) {
+    throw new Error('ユーザー情報の取得に失敗しました');
+  }
+
   await updateDoc(collectionRef, {
-    users: [...users, {
+    // 追加情報つきユーザー配列にアトミック追加
+    users: arrayUnion({
       uid: userId,
       role,
-      addedAt: Timestamp.now()
-    }],
-    updatedAt: Timestamp.now()
+      addedAt: Timestamp.now(),
+      displayName: userProfile.displayName,
+      pictureUrl: userProfile.pictureUrl,
+      statusMessage: userProfile.statusMessage
+    }),
+
+    // ユーザーIDだけをまとめた配列にアトミック追加
+    userIds: arrayUnion(userId),
+
+    // 更新日時
+    updatedAt: Timestamp.now(),
   });
 };
 
@@ -194,7 +213,7 @@ export const copyCollection = async (
   // 元のコレクション情報を取得
   const sourceCollectionRef = doc(db, `collections/${sourceCollectionId}`);
   const sourceCollectionDoc = await getDoc(sourceCollectionRef);
-  
+
   if (!sourceCollectionDoc.exists()) {
     throw new Error('Source collection not found');
   }
@@ -205,12 +224,12 @@ export const copyCollection = async (
 
   // リンクをコピー
   const sourceLinks = await getAllCollectionLinks(sourceCollectionId);
-  const copyPromises = sourceLinks.map(link => 
+  const copyPromises = sourceLinks.map(link =>
     addLinkToCollection(newCollectionId, link)
   );
-  
+
   await Promise.all(copyPromises);
-  
+
   return newCollectionId;
 };
 
@@ -222,15 +241,15 @@ export const updateUserRole = async (
 ) => {
   const collectionRef = doc(db, `collections/${collectionId}`);
   const collectionDoc = await getDoc(collectionRef);
-  
+
   if (!collectionDoc.exists()) {
     throw new Error('Collection not found');
   }
 
   const collection = collectionDoc.data();
   const users = collection.users || [];
-  
-  const updatedUsers = users.map((user: CollectionUser) => 
+
+  const updatedUsers = users.map((user: CollectionUser) =>
     user.uid === userId ? { ...user, role: newRole } : user
   );
 
@@ -247,14 +266,14 @@ export const removeUserFromCollection = async (
 ) => {
   const collectionRef = doc(db, `collections/${collectionId}`);
   const collectionDoc = await getDoc(collectionRef);
-  
+
   if (!collectionDoc.exists()) {
     throw new Error('Collection not found');
   }
 
   const collection = collectionDoc.data();
   const users = collection.users || [];
-  
+
   const updatedUsers = users.filter((user: CollectionUser) => user.uid !== userId);
 
   await updateDoc(collectionRef, {
@@ -267,7 +286,7 @@ export const removeUserFromCollection = async (
 export const getCollectionById = async (collectionId: string) => {
   const collectionRef = doc(db, `collections/${collectionId}`);
   const collectionDoc = await getDoc(collectionRef);
-  
+
   if (!collectionDoc.exists()) {
     return null;
   }
