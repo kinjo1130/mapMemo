@@ -21,19 +21,41 @@ export const createCollection = async (userId: string, title: string, isPublic: 
 };
 
 // コレクションの取得
+
 export const getCollections = async (userId: string) => {
   const collectionsRef = collection(db, 'collections');
-  const q = query(collectionsRef, where('uid', '==', userId));
-  const querySnapshot = await getDocs(q);
   
-  return querySnapshot.docs.map(doc => {
-    const data = doc.data() as Collection;
-    return {
-      ...data,
-      id: doc.id,
-    };
+  // 所有しているコレクションとユーザーが参加しているコレクションの両方を取得
+  const q = query(
+    collectionsRef,
+    where('uid', '==', userId)
+  );
+  const q2 = query(
+    collectionsRef,
+    where('users', 'array-contains', { uid: userId })
+  );
+  
+  const [ownedSnapshot, participatingSnapshot] = await Promise.all([
+    getDocs(q),
+    getDocs(q2)
+  ]);
+  
+  // 両方の結果を結合して重複を除去
+  const collections = new Map();
+  
+  [...ownedSnapshot.docs, ...participatingSnapshot.docs].forEach(doc => {
+    if (!collections.has(doc.id)) {
+      const data = doc.data() as Collection;
+      collections.set(doc.id, {
+        ...data,
+        id: doc.id,
+      });
+    }
   });
+  
+  return Array.from(collections.values());
 };
+
 
 // コレクションへのリンク追加
 export const addLinkToCollection = async (collectionId: string, link: Link) => {
