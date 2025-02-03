@@ -1,4 +1,5 @@
 import { extractPlaceInfo, PlaceInfo, expandShortUrl } from './expandUrl';
+import { fetchAndSaveToFirestore } from './Storage/GoogleMapPhotoUrl';
 
 export interface PlaceDetails {
   name: string;
@@ -70,12 +71,22 @@ async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDe
   }
 
   const result = detailsData.result;
-  console.log('Place details:', result);
+    console.log('Place details:', result);
 
-  let photoUrl: string | null = null;
-  if (result.photos && result.photos.length > 0) {
-    photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${result.photos[0].photo_reference}&key=${apiKey}`;
-  }
+    // 画像の処理
+    let photoUrl: string | null = null;
+    if (result.photos && result.photos.length > 0) {
+      try {
+        photoUrl = await fetchAndSaveToFirestore(
+          placeId,
+          result.photos[0].photo_reference,
+          apiKey
+        );
+      } catch (error) {
+        console.error('Failed to process image:', error);
+        // 画像の処理に失敗しても、他の情報は返す
+      }
+    }
 
   return {
     name: result.name || '',

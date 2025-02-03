@@ -6,6 +6,8 @@ export interface Collection {
   collectionId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  userIds: string[];
+  users: CollectionUser[];
 }
 
 // Link Type (SubCollection)
@@ -68,6 +70,9 @@ export interface CollectionUser {
   uid: string;
   role: 'owner' | 'editor' | 'viewer';
   addedAt: any; // Timestamp
+  displayName: string;
+  pictureUrl: string;
+  statusMessage: string;
 }
 
 export interface Collection {

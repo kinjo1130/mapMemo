@@ -50,7 +50,7 @@ const InviteModal: React.FC<InviteModalProps> = ({
           <div className="bg-gray-50 rounded-lg p-2 space-y-1">
             {collection.users?.map((user: CollectionUser) => (
               <div key={user.uid} className="flex justify-between items-center text-sm">
-                <span>{user.uid}</span>
+                <span>{user.displayName}</span>
                 <span className="text-gray-500">{user.role}</span>
               </div>
             )) || (

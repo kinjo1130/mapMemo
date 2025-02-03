@@ -23,7 +23,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log(`Received ${events.length} events`);
 
     for (const event of events) {
-      console.log(`Processing event: ${JSON.stringify(event)}`);
+      // console.log(`Processing event: ${JSON.stringify(event)}`);
 
       if (event.type === 'follow') {
         const { userId } = event.source;
