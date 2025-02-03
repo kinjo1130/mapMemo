@@ -94,7 +94,7 @@ const CollectionModal: React.FC<CollectionModalProps> = ({
         uid: userId,
         isPublic: true,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       
       setCollections(prev => [...prev, newCollection]);

@@ -6,8 +6,8 @@ export interface Collection {
   collectionId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  userIds: string[];
-  users: CollectionUser[];
+  userIds?: string[];
+  users?: CollectionUser[];
 }
 
 // Link Type (SubCollection)
@@ -27,10 +27,6 @@ export interface Link {
   groupName: string;
   groupPictureUrl: string;
 }
-
-// Firestore Collection Path Types
-type CollectionPath = `/collections/${string}`;
-type SubCollectionPath = `/collections/${string}/links/${string}`;
 
 // Collection API Response Types
 interface CollectionResponse {
@@ -73,16 +69,6 @@ export interface CollectionUser {
   displayName: string;
   pictureUrl: string;
   statusMessage: string;
-}
-
-export interface Collection {
-  collectionId: string;
-  title: string;
-  uid: string;
-  isPublic: boolean;
-  createdAt: any; // Timestamp
-  updatedAt: any; // Timestamp
-  users?: CollectionUser[]; // 共同編集者リスト
 }
 
 export interface CollectionAction {
