@@ -196,7 +196,7 @@ export default function Home() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="検索..."
+              placeholder="名前, 住所, 地点名, グループ名で検索"
               className="w-full p-2 pr-20 border rounded text-base"
             />
             {inputValue && (

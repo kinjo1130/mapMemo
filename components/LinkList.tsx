@@ -28,23 +28,6 @@ const LinkList: React.FC<LinkListProps> = ({
   const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  // const lastLinkElementRef = useCallback(
-  //   (node: HTMLLIElement | null) => {
-  //     if (isLoading) return;
-  //     if (observer.current) observer.current.disconnect();
-  //     observer.current = new IntersectionObserver(
-  //       (entries) => {
-  //         if (entries[0].isIntersecting && hasMore) {
-  //           onLoadMore();
-  //         }
-  //       },
-  //       { threshold: 0.8 }
-  //     );
-  //     if (node) observer.current.observe(node);
-  //   },
-  //   [hasMore, onLoadMore, isLoading]
-  // );
-
   useEffect(() => {
     return () => {
       if (observer.current) {
@@ -108,7 +91,7 @@ const LinkList: React.FC<LinkListProps> = ({
             className="bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-xl overflow-hidden"
           >
             <div className="flex flex-col h-full">
-              <div className="w-full h-48 sm:h-56 relative">
+              <div className="w-full h-40 sm:h-44 relative">
                 <img
                   src={link.photoUrl || "/api/placeholder/150/150"}
                   alt={link.name || "場所の画像"}
@@ -123,7 +106,7 @@ const LinkList: React.FC<LinkListProps> = ({
                     <h3 className="font-semibold text-lg sm:text-xl text-gray-900 line-clamp-2 leading-tight">
                       {link.name}
                     </h3>
-                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                    <p className="mt-2 text-sm text-gray-600 line-clamp-2 truncate">
                       {link.address}
                     </p>
                   </div>

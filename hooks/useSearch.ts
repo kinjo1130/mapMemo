@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useLinks } from '@/hooks/useLinks';
 import { useDebounce } from './useDebounce';
 
-const LINKS_PER_PAGE = 100;
+const LINKS_PER_PAGE = 1000;
 const SEARCH_THRESHOLD = 20;
 const DEBOUNCE_DELAY = 300;
 
@@ -14,7 +14,7 @@ export function useSearch(userId: string) {
 
   const filteredLinks = useMemo(() => {
     if (!searchTerm) return links;
-    const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+    const searchTerms = searchTerm.toLowerCase().split(/\s+|\u3000+/).filter(term => term.length > 0);
     return links.filter(link =>
       searchTerms.every(term =>
         (link.name && link.name.toLowerCase().includes(term)) ||
