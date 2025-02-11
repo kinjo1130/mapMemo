@@ -106,7 +106,7 @@ const LinkList: React.FC<LinkListProps> = ({
                     <h3 className="font-semibold text-lg sm:text-xl text-gray-900 line-clamp-2 leading-tight">
                       {link.name}
                     </h3>
-                    <p className="mt-2 text-sm text-gray-600 line-clamp-2 truncate">
+                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">
                       {link.address}
                     </p>
                   </div>
