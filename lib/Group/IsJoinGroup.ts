@@ -1,7 +1,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../init/firebase";
 
-export const isJoinGroup = async (groupId: string, userId: string): Promise<boolean> => {
+export const IsJoinGroup = async (groupId: string, userId: string): Promise<boolean> => {
   try {
     const groupRef = doc(db, 'Groups', groupId);
     const groupDoc = await getDoc(groupRef);

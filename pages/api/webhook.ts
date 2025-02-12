@@ -10,7 +10,7 @@ import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
 import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 import { joinGroup } from '@/lib/Group/joinGroup';
-import { isJoinGroup } from '@/lib/Group/isJoinGroup';
+import { IsJoinGroup } from '@/lib/Group/IsJoinGroup';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -112,7 +112,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         try {
           userIds.forEach(async (userId: string) => {
             // すでに参加している場合は何もしない
-            if (await isJoinGroup(groupId, userId)) {
+            if (await IsJoinGroup(groupId, userId)) {
               return;
             }
 
