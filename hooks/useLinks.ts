@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { collection, query, where, getDocs, deleteDoc, doc, limit, startAfter, getDoc, or } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, limit, startAfter, getDoc, or, orderBy, OrderByDirection } from "firebase/firestore";
 import { db } from "../lib/init/firebase";
 import { Link } from "@/types/Link";
 
@@ -8,6 +8,9 @@ export const useLinks = (linksPerPage: number) => {
   const [lastVisible, setLastVisible] = useState<any>(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  // TODO: ソート機能を追加する
+  const [orderByField, setOrderByField] = useState("timestamp");
+  const [orderDirection, setOrderDirection] = useState<OrderByDirection>("desc");
 
   const loadLinks = useCallback(async (userId: string, lastDoc: any = null) => {
     if (isLoading) return;
@@ -19,7 +22,9 @@ export const useLinks = (linksPerPage: number) => {
           where("members", "array-contains", userId),
           where("userId", "==", userId)
         ),
+        orderBy(orderByField, orderDirection),
       );
+
       if (lastDoc) {
         q = query(q, startAfter(lastDoc));
       }
@@ -28,6 +33,7 @@ export const useLinks = (linksPerPage: number) => {
       const newLinks = querySnapshot.docs.map(
         (doc) => ({ ...doc.data(), docId: doc.id } as Link)
       );
+      console.log(newLinks);
 
       setLinks((prevLinks) => {
         const uniqueNewLinks = newLinks.filter(
@@ -62,46 +68,46 @@ export const useLinks = (linksPerPage: number) => {
     }
   }, []);
 
-  const searchLinks = useCallback(async (userId: string, searchTerm: string) => {
-    setIsLoading(true);
-    try {
-      const linksRef = collection(db, 'Links');
-      const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+  // const searchLinks = useCallback(async (userId: string, searchTerm: string) => {
+  //   setIsLoading(true);
+  //   console.log('searchLinks');
+  //   try {
+  //     const linksRef = collection(db, 'Links');
+  //     const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+  //     const baseQuery = query(
+  //       linksRef,
+  //       or(
+  //         where("members", "array-contains", userId),
+  //         where("userId", "==", userId)
+  //       ),
+  //       limit(100)  // 検索のベースとなる最大件数
+  //     );
 
-      const baseQuery = query(
-        linksRef,
-        or(
-          where("members", "array-contains", userId),
-          where("userId", "==", userId)
-        ),
-        limit(100)  // 検索のベースとなる最大件数
-      );
+  //     const querySnapshot = await getDocs(baseQuery);
+  //     const allLinks: Link[] = [];
+  //     querySnapshot.forEach((doc) => {
+  //       allLinks.push({ ...doc.data(), docId: doc.id } as Link);
+  //     });
 
-      const querySnapshot = await getDocs(baseQuery);
-      const allLinks: Link[] = [];
-      querySnapshot.forEach((doc) => {
-        allLinks.push({ ...doc.data(), docId: doc.id } as Link);
-      });
+  //     const filteredLinks = allLinks.filter(link => {
+  //       const nameMatches = searchTerms.every(term =>
+  //         link.name.toLowerCase().includes(term)
+  //       );
+  //       const addressMatches = searchTerms.every(term =>
+  //         link.address.toLowerCase().includes(term)
+  //       );
+  //       return nameMatches || addressMatches;
+  //     });
 
-      const filteredLinks = allLinks.filter(link => {
-        const nameMatches = searchTerms.every(term =>
-          link.name.toLowerCase().includes(term)
-        );
-        const addressMatches = searchTerms.every(term =>
-          link.address.toLowerCase().includes(term)
-        );
-        return nameMatches || addressMatches;
-      });
-
-      setLinks(filteredLinks.slice(0, linksPerPage));
-      setHasMore(filteredLinks.length > linksPerPage);
-      setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
-    } catch (error) {
-      console.error('Error searching links:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [linksPerPage]);
+  //     setLinks(filteredLinks.slice(0, linksPerPage));
+  //     setHasMore(filteredLinks.length > linksPerPage);
+  //     setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+  //   } catch (error) {
+  //     console.error('Error searching links:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [linksPerPage]);
   // 自分が所属しているグループごとにフィリタリングできるようにする
   const searchLinksByGroup = useCallback(async (userId: string, groupId: string) => {
     setIsLoading(true);
@@ -140,6 +146,6 @@ export const useLinks = (linksPerPage: number) => {
     }
   }, [linksPerPage]);
 
-  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinks, searchLinksByGroup };
+  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup };
 
 };

@@ -1,13 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useLinks } from '@/hooks/useLinks';
-import { useDebounce } from './useDebounce';
 
 const LINKS_PER_PAGE = 1000;
-const SEARCH_THRESHOLD = 20;
-const DEBOUNCE_DELAY = 300;
 
 export function useSearch(userId: string) {
-  const { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinks, searchLinksByGroup } =
+  const { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup } =
     useLinks(LINKS_PER_PAGE);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -34,19 +31,9 @@ export function useSearch(userId: string) {
     }
   }, [userId, loadLinks]);
 
-  const debouncedSearch = useDebounce(async (term: string) => {
-    setIsSearching(true);
-    await searchLinks(userId, term);
-    setIsSearching(false);
-  }, DEBOUNCE_DELAY);
-
   const handleSearchInputChange = useCallback((newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
-
-    if (links.length > SEARCH_THRESHOLD) {
-      debouncedSearch(newSearchTerm);
-    }
-  }, [links.length, debouncedSearch]);
+  }, [links.length]);
 
   return {
     links: filteredLinks,
