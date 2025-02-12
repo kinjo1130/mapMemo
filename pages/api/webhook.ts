@@ -9,6 +9,10 @@ import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
 import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
+import { getJoinGroupInfo } from '@/lib/Group/getJoinGroupInfo';
+import { getGroupInfo } from '@/lib/Group/getGroupInfo';
+import { joinGroup } from '@/lib/Group/joinGroup';
+import { isJoinGroup } from '@/lib/Group/isJoinGroup';
 
 const isGoogleMapsUrl = (url: string) => {
   return url.startsWith('https://maps.google.com/') ||
@@ -102,6 +106,28 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           await handlePostbackEvent(event);
         } catch (error) {
           await sendReplyMessage(event.replyToken, 'ポストバックイベントの処理中にエラーが発生しました。');
+        }
+      }
+      if(event.type === 'memberJoined') {
+        const { groupId } = event.source;
+        const { userIds } = event.joined.members;
+        try {
+          userIds.forEach(async (userId: string) => {
+            // すでに参加している場合は何もしない
+            if (await isJoinGroup(groupId, userId)) {
+              return;
+            }
+
+            // DBにユーザー情報がない場合は取得して保存
+            if (!await checkUserExists(userId)) {
+            const profile = await client.getProfile(userId);
+            await saveUserProfile(profile);
+          }
+            // ここでGroupのmembersに参加しているユーザーのuidを追加する
+            await joinGroup(groupId, userId);
+          });
+        } catch (error) {
+          console.error('Error getting or fetching group info:', error);
         }
       }
 

@@ -1,9 +1,8 @@
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../init/firebase';
-import { Group } from '@/types/Group';
+import { Group } from "@/types/Group";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../init/firebase";
 
-
-export const getGroupInfo = async (groupId: string, userId: string): Promise<Group | null> => {
+export const getGroupInfo = async (groupId: string): Promise<Group | null> => {
   try {
     const groupRef = doc(db, 'Groups', groupId);
     const groupDoc = await getDoc(groupRef);
@@ -19,19 +18,16 @@ export const getGroupInfo = async (groupId: string, userId: string): Promise<Gro
       return null;
     }
 
-    if (groupData.members.includes(userId)) {
-      const group: Group = {
-        groupId: groupId,
-        groupName: groupData.groupName,
-        members: groupData.members,
-        pictureUrl: groupData.pictureUrl,
-      };
-      return group;
-    } else {
-      return null;
-    }
+    const group: Group = {
+      groupId: groupId,
+      groupName: groupData.groupName,
+      members: groupData.members,
+      pictureUrl: groupData.pictureUrl,
+      updatedAt: groupData.updatedAt,
+    };
+    return group;
   } catch (error) {
-    console.error('Error checking group membership:', error);
+    console.error('Error getting group info:', error);
     return null;
   }
 }

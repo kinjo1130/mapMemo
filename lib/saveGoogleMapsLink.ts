@@ -1,7 +1,7 @@
 import { getPlaceDetails, PlaceDetails } from '@/lib/googleMaps';
 import { saveMapLink } from '@/lib/saveMapLink';
 import { getCurrentUser } from './User/getCurrentUser';
-import { getGroupInfo } from './Group/getGroupInfo';
+import { getJoinGroupInfo } from './Group/getJoinGroupInfo';
 import { SaveMapLinkParams } from '@/types/Link';
 
 type SaveGoogleMapsLinkParams = {
@@ -37,7 +37,7 @@ export async function saveGoogleMapsLink(
 
     let groupData = null;
     if (groupId) {
-      groupData = await getGroupInfo(groupId, userId);
+      groupData = await getJoinGroupInfo(groupId, userId);
     }
 
     const saveMapLinkParams: SaveMapLinkParams = {
