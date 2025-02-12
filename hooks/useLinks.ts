@@ -3,6 +3,26 @@ import { collection, query, where, getDocs, deleteDoc, doc, limit, startAfter, g
 import { db } from "../lib/init/firebase";
 import { Link } from "@/types/Link";
 
+export const BASE_QUERY =({
+  userId,
+  orderByField,
+  orderDirection
+}:{
+  userId: string;
+  orderByField: string;
+  orderDirection: OrderByDirection;
+}) =>{
+   return query(
+  collection(db, "Links"),
+  or(
+    where("members", "array-contains", userId),
+    where("userId", "==", userId)
+  ),
+  orderBy(orderByField, orderDirection),
+);
+}
+
+
 export const useLinks = (linksPerPage: number) => {
   const [links, setLinks] = useState<Link[]>([]);
   const [lastVisible, setLastVisible] = useState<any>(null);
@@ -16,18 +36,7 @@ export const useLinks = (linksPerPage: number) => {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      let q = query(
-        collection(db, "Links"),
-        or(
-          where("members", "array-contains", userId),
-          where("userId", "==", userId)
-        ),
-        orderBy(orderByField, orderDirection),
-      );
-
-      if (lastDoc) {
-        q = query(q, startAfter(lastDoc));
-      }
+      let q = BASE_QUERY({ userId, orderByField, orderDirection });
 
       const querySnapshot = await getDocs(q);
       const newLinks = querySnapshot.docs.map(
@@ -120,10 +129,7 @@ export const useLinks = (linksPerPage: number) => {
           where("groupId", "==", groupId),
           limit(100)
         )
-      : query(
-          linksRef,
-          limit(100)
-        );
+      : BASE_QUERY({ userId, orderByField, orderDirection });
 
       const querySnapshot = await getDocs(baseQuery);
       const allLinks: Link[] = [];
