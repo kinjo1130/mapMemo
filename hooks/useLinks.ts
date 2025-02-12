@@ -33,7 +33,6 @@ export const useLinks = (linksPerPage: number) => {
       const newLinks = querySnapshot.docs.map(
         (doc) => ({ ...doc.data(), docId: doc.id } as Link)
       );
-      console.log(newLinks);
 
       setLinks((prevLinks) => {
         const uniqueNewLinks = newLinks.filter(
