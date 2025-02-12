@@ -9,8 +9,6 @@ import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
 import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
-import { getJoinGroupInfo } from '@/lib/Group/getJoinGroupInfo';
-import { getGroupInfo } from '@/lib/Group/getGroupInfo';
 import { joinGroup } from '@/lib/Group/joinGroup';
 import { isJoinGroup } from '@/lib/Group/isJoinGroup';
 
