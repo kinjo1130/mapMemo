@@ -108,9 +108,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
       if(event.type === 'memberJoined') {
         const { groupId } = event.source;
-        const { userIds } = event.joined.members;
+        const  userIds  = event.joined.members as [
+          {
+            "type": string,
+            "userId": string
+          },
+        ];
         try {
-          userIds.forEach(async (userId: string) => {
+          userIds.forEach(async ({ userId }) => {
             // すでに参加している場合は何もしない
             if (await IsJoinGroup(groupId, userId)) {
               return;
