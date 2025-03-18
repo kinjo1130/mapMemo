@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.0",
-    "@line/bot-sdk": "^9.2.2",
+    "@line/bot-sdk": "^9.7.1",
     "@line/liff": "^2.23.2",
     "classnames": "^2.5.1",
     "core-js": "^3.37.1",
