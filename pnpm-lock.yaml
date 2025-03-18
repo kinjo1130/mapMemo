@@ -26,6 +26,9 @@ dependencies:
   firebase-admin:
     specifier: ^13.0.2
     version: 13.0.2
+  hono:
+    specifier: ^4.7.4
+    version: 4.7.4
   lucide-react:
     specifier: ^0.399.0
     version: 0.399.0(react@18.3.1)
@@ -2626,6 +2629,11 @@ packages:
     engines: {node: '>= 0.4'}
     dependencies:
       function-bind: 1.1.2
+
+  /hono@4.7.4:
+    resolution: {integrity: sha512-Pst8FuGqz3L7tFF+u9Pu70eI0xa5S3LPUmrNd5Jm8nTHze9FxLTK9Kaj5g/k4UcwuJSXTP65SyHOPLrffpcAJg==}
+    engines: {node: '>=16.9.0'}
+    dev: false
 
   /html-entities@2.5.2:
     resolution: {integrity: sha512-K//PSRMQk4FZ78Kyau+mZurHn3FH0Vwr+H36eE0rPbeYkRRi9YxceYPhuN60UwWorxyKHhqoAJl2OFKa4BVtaA==}
