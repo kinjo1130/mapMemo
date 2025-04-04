@@ -79,7 +79,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         if (isGoogleMapsUrl(messageText)) {
           try {
-            // ここで saveGoogleMapsLink 関数を呼び出す
             const result = await saveGoogleMapsLink({
               mapUrl: messageText,
               userId,
@@ -89,7 +88,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             if (result.error) {
               await sendReplyMessage(replyToken, `エラーが発生しました: ${result.error}`);
             } else {
-              await sendReplyMessage(replyToken, 'Google Mapsのリンクを保存しました。');
+              await sendReplyMessage(replyToken, {
+                type: 'template',
+                altText: 'Google Mapsのリンクを保存しました。',
+                template: {
+                  type: 'buttons',
+                  text: 'Google Mapsのリンクを保存しました。',
+                  actions: [
+                    {
+                      type: 'uri',
+                      label: '保存したマップを見る',
+                      uri: 'https://liff.line.me/2005710452-e6m8Ao66'
+                    }
+                  ]
+                }
+              });
             }
           } catch (error) {
             console.error('Error saving Google Maps link:', error);
