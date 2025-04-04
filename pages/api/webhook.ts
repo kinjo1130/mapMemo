@@ -22,10 +22,11 @@ const isGoogleMapsUrl = (url: string) => {
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
     const events = req.body.events;
+    console.log(`Received ${events} `);
     console.log(`Received ${events.length} events`);
 
     for (const event of events) {
-      // console.log(`Processing event: ${JSON.stringify(event)}`);
+      console.log(`Processing event: ${JSON.stringify(event)}`);
 
       if (event.type === 'follow') {
         const { userId } = event.source;
@@ -79,7 +80,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         if (isGoogleMapsUrl(messageText)) {
           try {
-            // ここで saveGoogleMapsLink 関数を呼び出す
             const result = await saveGoogleMapsLink({
               mapUrl: messageText,
               userId,
@@ -89,7 +89,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             if (result.error) {
               await sendReplyMessage(replyToken, `エラーが発生しました: ${result.error}`);
             } else {
-              await sendReplyMessage(replyToken, 'Google Mapsのリンクを保存しました。');
+              await sendReplyMessage(replyToken, "Google Mapsのリンクを保存しました。");
             }
           } catch (error) {
             console.error('Error saving Google Maps link:', error);
@@ -97,6 +97,88 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
         } else {
           console.log(`Received non-Google Maps URL: ${messageText}`);
+          // メンションがきた時の処理
+          // メンションチェック (@mapmemo が含まれているか)
+          if (messageText.includes('@mapMemo')) {
+            console.log("Mentioned @mapMemo");
+            const replyToken = event.replyToken;
+            await sendReplyMessage(replyToken, {
+              type: 'flex',
+              altText: '保存したマップを確認できます',
+              contents: {
+                type: "bubble",
+                body: {
+                  type: "box",
+                  layout: "vertical",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "MapMemo",
+                      weight: "bold",
+                      size: "xl",
+                      color: "#1DB446"
+                    },
+                    {
+                      type: "text",
+                      text: "お気に入りの場所を保存・管理",
+                      size: "sm",
+                      color: "#999999",
+                      margin: "md"
+                    },
+                    {
+                      type: "separator",
+                      margin: "xxl"
+                    },
+                    {
+                      type: "box",
+                      layout: "vertical",
+                      margin: "xxl",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "MapMemoへようこそ！",
+                          size: "md",
+                          weight: "bold"
+                        },
+                        {
+                          type: "text",
+                          text: "お気に入りの場所を簡単に保存して、いつでも確認できます。",
+                          wrap: true,
+                          size: "xs",
+                          margin: "md",
+                          color: "#666666"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                footer: {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "button",
+                      style: "primary",
+                      height: "sm",
+                      action: {
+                        type: "uri",
+                        label: "保存した地点一覧を見る",
+                        uri: "https://liff.line.me/2005710452-e6m8Ao66"
+                      },
+                      color: "#1DB446"
+                    },
+                    {
+                      type: "spacer",
+                      size: "sm"
+                    }
+                  ],
+                  flex: 0
+                }
+              }
+            });
+          }
         }
       }
       if (event.type === 'postback') {
