@@ -22,10 +22,11 @@ const isGoogleMapsUrl = (url: string) => {
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
     const events = req.body.events;
+    console.log(`Received ${events} `);
     console.log(`Received ${events.length} events`);
 
     for (const event of events) {
-      // console.log(`Processing event: ${JSON.stringify(event)}`);
+      console.log(`Processing event: ${JSON.stringify(event)}`);
 
       if (event.type === 'follow') {
         const { userId } = event.source;
@@ -110,6 +111,27 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
         } else {
           console.log(`Received non-Google Maps URL: ${messageText}`);
+          // メンションがきた時の処理
+          // メンションチェック (@mapmemo が含まれているか)
+          if (messageText.includes('@mapMemo')) {
+            console.log("Mentioned @mapMemo");
+            const replyToken = event.replyToken;
+            await sendReplyMessage(replyToken, {
+              type: 'template',
+              altText: '保存したマップを確認できます',
+              template: {
+                type: 'buttons',
+                text: '何かお手伝いできることはありますか？',
+                actions: [
+                  {
+                    type: 'uri',
+                    label: '保存したマップを見る',
+                    uri: 'https://liff.line.me/2005710452-e6m8Ao66'
+                  }
+                ]
+              }
+            });
+          }
         }
       }
       if (event.type === 'postback') {
