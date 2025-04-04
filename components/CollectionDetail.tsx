@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getAllCollectionLinks } from '@/lib/Collection';
 import type {  Link } from '@/types/Link';
 import type {Collection} from '@/types/Collection';
-import { ArrowLeft, Share2, Settings, Users } from 'lucide-react';
+import { ArrowLeft, Share2, Settings, Users, Map, Calendar } from 'lucide-react';
 import LinkList from './LinkList';
+import TripPlanner from './TripPlanner';
 import { db } from '@/lib/init/firebase';
 import { deleteDoc, doc } from 'firebase/firestore';
 import ShareButton from './ShareSettings';
@@ -19,6 +20,7 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ collection, 
   const [links, setLinks] = useState<Link[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'links' | 'trip'>('links');
 
   useEffect(() => {
     loadCollectionLinks();
@@ -81,20 +83,56 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ collection, 
         )} */}
       </div>
 
-      {/* リンク一覧 */}
+      {/* タブ切り替え */}
+      <div className="flex border-b mb-6">
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === 'links'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('links')}
+        >
+          <div className="flex items-center">
+            <Map className="w-4 h-4 mr-2" />
+            ピン一覧
+          </div>
+        </button>
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === 'trip'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('trip')}
+        >
+          <div className="flex items-center">
+            <Calendar className="w-4 h-4 mr-2" />
+            旅行プランナー
+          </div>
+        </button>
+      </div>
+
+      {/* コンテンツ表示 */}
       {loading ? (
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      ) : (
+      ) : activeTab === 'links' ? (
         <LinkList
-        links={links}
-        onDelete={handleDelete}
-        // onLoadMore={handleLoadMore}
-        // hasMore={hasMore}
-        isLoading={loading}
-        userId={collection.uid}
-      />
+          links={links}
+          onDelete={handleDelete}
+          // onLoadMore={handleLoadMore}
+          // hasMore={hasMore}
+          isLoading={loading}
+          userId={collection.uid}
+        />
+      ) : (
+        <TripPlanner
+          collection={collection}
+          links={links}
+          onUpdateLinks={loadCollectionLinks}
+        />
       )}
 
       {/* 招待モーダルを追加 */}

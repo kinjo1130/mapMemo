@@ -64,6 +64,8 @@ export const addLinkToCollection = async (collectionId: string, link: Link) => {
 
   await setDoc(linkRef, {
     ...link,
+    isCurrentTrip: link.isCurrentTrip || false,
+    tripOrder: link.tripOrder || null,
     addedAt: serverTimestamp(),
   });
 };
@@ -107,6 +109,8 @@ export const getAllCollectionLinks = async (collectionId: string): Promise<Link[
         displayName: data.displayName,
         groupName: data.groupName,
         groupPictureUrl: data.groupPictureUrl,
+        isCurrentTrip: data.isCurrentTrip || false,
+        tripOrder: data.tripOrder || null,
         // addedAt: data.addedAt
       });
     });

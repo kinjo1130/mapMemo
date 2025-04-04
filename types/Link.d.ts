@@ -15,7 +15,8 @@ export interface Link {
   displayName: string;
   groupName: string;
   groupPictureUrl: string;
-
+  isCurrentTrip?: boolean; // 現在の旅行用かどうか
+  tripOrder?: number; // 訪問順序
 }
 export interface PlaceDetails {
   name: string;
