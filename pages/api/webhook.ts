@@ -89,21 +89,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             if (result.error) {
               await sendReplyMessage(replyToken, `エラーが発生しました: ${result.error}`);
             } else {
-              await sendReplyMessage(replyToken, {
-                type: 'template',
-                altText: 'Google Mapsのリンクを保存しました。',
-                template: {
-                  type: 'buttons',
-                  text: 'Google Mapsのリンクを保存しました。',
-                  actions: [
-                    {
-                      type: 'uri',
-                      label: '保存したマップを見る',
-                      uri: 'https://liff.line.me/2005710452-e6m8Ao66'
-                    }
-                  ]
-                }
-              });
+              await sendReplyMessage(replyToken, "Google Mapsのリンクを保存しました。");
             }
           } catch (error) {
             console.error('Error saving Google Maps link:', error);
@@ -117,18 +103,79 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             console.log("Mentioned @mapMemo");
             const replyToken = event.replyToken;
             await sendReplyMessage(replyToken, {
-              type: 'template',
+              type: 'flex',
               altText: '保存したマップを確認できます',
-              template: {
-                type: 'buttons',
-                text: '何かお手伝いできることはありますか？',
-                actions: [
-                  {
-                    type: 'uri',
-                    label: '保存したマップを見る',
-                    uri: 'https://liff.line.me/2005710452-e6m8Ao66'
-                  }
-                ]
+              contents: {
+                type: "bubble",
+                body: {
+                  type: "box",
+                  layout: "vertical",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "MapMemo",
+                      weight: "bold",
+                      size: "xl",
+                      color: "#1DB446"
+                    },
+                    {
+                      type: "text",
+                      text: "お気に入りの場所を保存・管理",
+                      size: "sm",
+                      color: "#999999",
+                      margin: "md"
+                    },
+                    {
+                      type: "separator",
+                      margin: "xxl"
+                    },
+                    {
+                      type: "box",
+                      layout: "vertical",
+                      margin: "xxl",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "MapMemoへようこそ！",
+                          size: "md",
+                          weight: "bold"
+                        },
+                        {
+                          type: "text",
+                          text: "お気に入りの場所を簡単に保存して、いつでも確認できます。",
+                          wrap: true,
+                          size: "xs",
+                          margin: "md",
+                          color: "#666666"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                footer: {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "button",
+                      style: "primary",
+                      height: "sm",
+                      action: {
+                        type: "uri",
+                        label: "保存した地点一覧を見る",
+                        uri: "https://liff.line.me/2005710452-e6m8Ao66"
+                      },
+                      color: "#1DB446"
+                    },
+                    {
+                      type: "spacer",
+                      size: "sm"
+                    }
+                  ],
+                  flex: 0
+                }
               }
             });
           }
