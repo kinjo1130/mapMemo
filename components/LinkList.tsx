@@ -82,92 +82,83 @@ const LinkList: React.FC<LinkListProps> = ({
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <ul className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="container mx-auto px-0 py-0 bg-white">
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {links.map((link, index) => (
           <li
             key={`${link.docId}-${index}`}
-            // ref={index === links.length - 1 ? lastLinkElementRef : null}
-            className="bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-xl overflow-hidden"
+            className="overflow-hidden flex p-0 border border-gray-100 rounded-lg"
           >
-            <div className="flex flex-col h-full">
-              <div className="w-full h-40 sm:h-44 relative">
+            <div className="w-28 h-28 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+              {link.photoUrl ? (
                 <img
-                  src={link.photoUrl || "/api/placeholder/150/150"}
+                  src={link.photoUrl}
                   alt={link.name || "場所の画像"}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
-              </div>
-
-              <div className="p-4 sm:p-6 flex flex-col flex-grow">
-                <div className="flex-grow space-y-3">
-                  <div>
-                    <h3 className="font-semibold text-lg sm:text-xl text-gray-900 line-clamp-2 leading-tight">
-                      {link.name}
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                      {link.address}
-                    </p>
-                  </div>
-
-                  <a
-                    href={link.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm group"
-                  >
-                    <MapPin className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                    <span className="underline">Google Map</span>
-                  </a>
-
-                  <div className="flex items-center space-x-3 mt-4">
-                    {link.userPictureUrl && (
-                      <img
-                        src={link.userPictureUrl}
-                        alt={link.displayName}
-                        className="w-8 h-8 rounded-full ring-2 ring-gray-100"
-                        loading="lazy"
-                      />
-                    )}
-                    <span className="text-sm text-gray-700">
-                      {link.displayName}
-                    </span>
-                  </div>
-
-                  {link.groupId && (
-                    <div className="flex items-center space-x-3">
-                      {link.groupPictureUrl && (
-                        <img
-                          src={link.groupPictureUrl}
-                          alt={link.groupName}
-                          className="w-8 h-8 rounded-full ring-2 ring-gray-100"
-                          loading="lazy"
-                        />
-                      )}
-                      <span className="text-sm text-gray-700">
-                        {link.groupName}
-                      </span>
-                    </div>
-                  )}
+              ) : (
+                <MapPin className="w-10 h-10 text-gray-400" />
+              )}
+            </div>
+            
+            <div className="p-3 flex-grow relative">
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-medium text-base text-gray-900">
+                    {link.name}
+                  </h3>
+                  
                 </div>
-
-                <div className="flex justify-end mt-4 pt-3 border-t border-gray-100 space-x-4">
+                
+                <p className="text-xs text-gray-600 mb-2">
+                  {link.address}
+                </p>
+                
+                <div className="flex items-center mt-1 mb-2">
+                  {link.userPictureUrl ? (
+                    <img
+                      src={link.userPictureUrl}
+                      alt={link.displayName || "ユーザー"}
+                      className="w-6 h-6 rounded-full mr-2"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gray-300 mr-2"></div>
+                  )}
+                  <span className="text-xs text-gray-700">{link.displayName || "ユーザー"}</span>
+                </div>
+                
+                {link.groupName && (
+                  <div className="flex items-center mb-2">
+                    {link.groupPictureUrl ? (
+                      <img
+                        src={link.groupPictureUrl}
+                        alt={link.groupName}
+                        className="w-6 h-6 rounded-full mr-2"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-300 mr-2"></div>
+                    )}
+                    <span className="text-xs text-gray-700">{link.groupName}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-end mt-auto space-x-4">
                   <button
                     onClick={() => handleCollectionClick(link)}
-                    className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm group"
+                    className="text-blue-600 flex items-center"
                     aria-label="コレクションに追加"
                   >
-                    <BookmarkPlus className="w-4 h-4 mr-1 group-hover:scale-110 transition-transform" />
-                    <span>コレクション</span>
+                    <BookmarkPlus className="w-5 h-5" />
+                    <span className="ml-1 text-xs">コレクション</span>
                   </button>
                   <button
                     onClick={() => handleDelete(link.docId)}
-                    className="inline-flex items-center text-red-600 hover:text-red-800 text-sm group"
+                    className="text-red-600 flex items-center"
                     aria-label="アイテムを削除"
                   >
-                    <Trash2 className="w-4 h-4 mr-1 group-hover:scale-110 transition-transform" />
-                    <span>削除</span>
+                    <Trash2 className="w-5 h-5" />
+                    <span className="ml-1 text-xs">削除</span>
                   </button>
                 </div>
               </div>

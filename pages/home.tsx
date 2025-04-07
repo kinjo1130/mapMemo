@@ -161,7 +161,7 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <Header profile={profile} logout={logout} />
-      <div className="flex space-x-2 px-4 bg-white shadow">
+      <div className="flex space-x-1 px-2 py-1 bg-white shadow">
         <TabButton
           tab="list"
           label="リンク一覧"
@@ -182,12 +182,12 @@ export default function Home() {
         />
       </div>
       {activeTab === "list" && (
-        <div className="px-4 py-2 bg-white">
-          <div className="flex items-center gap-2 mb-5 mt-2">
+        <div className="px-2 py-1 bg-white">
+          <div className="flex items-center gap-1 mb-2 mt-1">
             <select
               value={selectedGroup?.groupId ?? ""}
               onChange={(e)=>handleGroupSelect(e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full py-1 px-2 border rounded text-xs"
             >
               <option value="">すべてのグループ</option>
               {groups?.map((group) => (
@@ -204,20 +204,21 @@ export default function Home() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="名前, 住所, 地点名, グループ名で検索"
-              className="w-full p-2 pr-20 border rounded text-base"
+              className="w-full py-1 px-2 pr-16 border rounded text-xs"
             />
             {inputValue && (
               <OctagonX
-                className="absolute right-12 top-2 cursor-pointer"
+                className="absolute right-10 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                size={14}
                 onClick={handleClear}
               />
             )}
             <button
               onClick={executeSearch}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded bg-primary text-white"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 rounded bg-primary text-white"
               disabled={isSearching || !inputValue}
             >
-              <Search size={20} />
+              <Search size={14} />
             </button>
           </div>
         </div>

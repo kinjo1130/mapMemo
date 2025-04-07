@@ -52,10 +52,10 @@ const Header: React.FC<HeaderProps> = ({ profile, logout }) => {
 
   if (!profile) {
     return (
-      <header className="bg-primary text-white p-4 shadow-md">
+      <header className="bg-primary text-white p-2 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Map Memo</h1>
-          <div className="animate-pulse bg-white bg-opacity-50 rounded-full w-10 h-10"></div>
+          <h1 className="text-lg font-bold">Map Memo</h1>
+          <div className="animate-pulse bg-white bg-opacity-50 rounded-full w-6 h-6"></div>
         </div>
       </header>
     );
@@ -63,17 +63,17 @@ const Header: React.FC<HeaderProps> = ({ profile, logout }) => {
 
   return (
     <>
-      <header className="bg-primary text-white p-4 shadow-md">
+      <header className="bg-primary text-white p-2 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Map Memo</h1>
+          <h1 className="text-lg font-bold">Map Memo</h1>
           <button
             onClick={() => setShowProfile(true)}
-            className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full"
+            className="focus:outline-none focus:ring-1 focus:ring-white focus:ring-opacity-50 rounded-full"
           >
             <img
               src={profile.pictureUrl || "/api/placeholder/100/100"}
               alt={profile.displayName}
-              className="w-10 h-10 rounded-full border-2 border-white"
+              className="w-6 h-6 rounded-full border border-white"
             />
           </button>
         </div>
