@@ -3,6 +3,7 @@ import { useLiff } from "@/hooks/useLiff";
 import LinkList from "@/components/LinkList";
 import Header from "@/components/Header";
 import Map from "@/components/Map";
+import MapWithCollections from "@/components/MapWithCollections";
 import { useProfile } from "@/hooks/useProfile";
 import { useSearch } from "@/hooks/useSearch";
 import { Tab, TabButton } from "@/components/TabButton";
@@ -168,6 +169,12 @@ export default function Home() {
           onClick={() => handleTabChange("list")}
         />
         <TabButton
+          tab="map"
+          label="マップ"
+          activeTab={activeTab}
+          onClick={() => handleTabChange("map")}
+        />
+        <TabButton
           tab="collections"
           label="コレクション"
           activeTab={activeTab}
@@ -216,7 +223,7 @@ export default function Home() {
         </div>
       )}
       <main className="flex-1 overflow-hidden">
-        {activeTab === "map" && <Map links={links} />}
+        {activeTab === "map" && <MapWithCollections userId={profile?.userId ?? ""} />}
         {activeTab === "list" && (
           <div className="h-full overflow-auto p-4">
             <LinkList
