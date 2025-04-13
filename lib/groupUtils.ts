@@ -4,6 +4,7 @@ import { getFirestore, doc, getDoc, setDoc, arrayUnion, Timestamp } from 'fireba
 import { GroupSummaryResponse } from '@line/bot-sdk';
 import { client } from './init/line';
 import { db } from './init/firebase'; // Firebaseアプリのインスタンスをインポート
+import { getGroupInfo } from './Group/getGroupInfo';
 
 
 export interface GroupInfo {
@@ -67,30 +68,68 @@ export async function saveGroupInfo(groupId: string, groupInfo: GroupSummaryResp
   }
 }
 
+/**
+ * グループが存在しない場合に、LINE APIからグループ情報を取得して保存する
+ * @param groupId グループID
+ * @param userId ユーザーID
+ * @returns 新しく作成されたグループ情報
+ */
+async function createGroupFromLineApi(groupId: string, userId: string): Promise<GroupInfo> {
+  // LINE APIからグループ情報を取得
+  const lineGroupInfo = await fetchGroupInfo(groupId);
+  
+  // 既存のグループ情報があるか確認（念のため）
+  const existingGroupInfo = await getGroupInfo(groupId);
+  
+  // メンバーリストを作成（既存のグループ情報がある場合はそのメンバーも含める）
+  const members = existingGroupInfo 
+    ? [userId, ...existingGroupInfo.members.filter(id => id !== userId)]
+    : [userId];
+  
+  // グループ情報をFirestoreに保存
+  await saveGroupInfo(groupId, lineGroupInfo, userId);
+  
+  // 新しいグループ情報を返す
+  return {
+    groupId: lineGroupInfo.groupId,
+    groupName: lineGroupInfo.groupName,
+    pictureUrl: lineGroupInfo.pictureUrl,
+    updatedAt: new Date(),
+    members
+  };
+}
+
+/**
+ * グループ情報を取得または作成する
+ * 1. Firestoreからグループ情報を取得
+ * 2. グループが存在しない場合はLINE APIから情報を取得して作成
+ * 3. ユーザーがメンバーに含まれていない場合は追加
+ * 
+ * @param groupId グループID
+ * @param userId ユーザーID
+ * @returns グループ情報
+ */
 export async function getOrFetchGroupInfo(groupId: string, userId: string): Promise<GroupInfo> {
   try {
+    // Firestoreからグループ情報を取得
     const groupRef = doc(db, 'Groups', groupId);
     const docSnap = await getDoc(groupRef);
 
+    // グループが存在しない場合は新規作成
     if (!docSnap.exists()) {
-      const groupInfo = await fetchGroupInfo(groupId);
-      await saveGroupInfo(groupId, groupInfo, userId);
-      return {
-        groupId: groupInfo.groupId,
-        groupName: groupInfo.groupName,
-        pictureUrl: groupInfo.pictureUrl,
-        updatedAt: new Date(),
-        members: [userId]
-      };
-    } else {
-      const data = docSnap.data() as GroupInfo;
-      // メンバーが存在しない場合は追加
-      if (!data.members.includes(userId)) {
-        await saveGroupMembership(userId, groupId);
-        data.members.push(userId);
-      }
-      return data;
+      return await createGroupFromLineApi(groupId, userId);
     }
+    
+    // グループが存在する場合
+    const data = docSnap.data() as GroupInfo;
+    
+    // ユーザーがメンバーに含まれていない場合は追加
+    if (!data.members.includes(userId)) {
+      await saveGroupMembership(userId, groupId);
+      data.members.push(userId);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error getting or fetching group info:', error);
     throw error;
