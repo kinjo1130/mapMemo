@@ -16,7 +16,7 @@
     }
   ],
   "orientation": "any",
-  "display": "fullscreen",
+  "display": "browser",
   "dir": "auto",
   "lang": "ja-JP",
   "short_name": "MapMemo",
