@@ -1,16 +1,25 @@
 {
-  "name": "MapMemo",
-  "short_name": "MapMemo",
-  "description": "地図上の場所を簡単に保存・共有できるアプリ",
-  "start_url": "/pwaLaunch",
-  "display": "fullscreen",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "theme_color": "#329c5a",
+  "background_color": "#329c5a",
   "icons": [
     {
-      "src": "../public/favicon.ico",
-      "sizes": "192x192",
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "icon512_maskable.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "icon512_rounded.png",
       "type": "image/png"
     }
-  ]
+  ],
+  "orientation": "any",
+  "display": "standalone",
+  "dir": "auto",
+  "lang": "ja-JP",
+  "short_name": "MapMemo",
+  "name": "MapMemo",
+  "start_url": "/pwaLaunch"
 }
