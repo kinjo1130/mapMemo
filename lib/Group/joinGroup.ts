@@ -1,5 +1,6 @@
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../init/firebase";
+import { updateLinkMembers } from "../Links/updateLinkMembers";
 
 export const joinGroup = async (groupId: string, userId: string): Promise<boolean> => {
   try {
@@ -17,13 +18,25 @@ export const joinGroup = async (groupId: string, userId: string): Promise<boolea
       return false;
     }
 
+    // すでにグループに入っている場合は何もしない
     if (groupData.members.includes(userId)) {
       console.log('User already in group');
       return false;
     }
 
+    // グループのメンバーリストを更新
     const updatedMembers = [...groupData.members, userId];
     await updateDoc(groupRef, { members: updatedMembers });
+    
+    // グループに関連する既存のリンクのmembersフィールドを更新
+    try {
+      const updatedCount = await updateLinkMembers(groupId, userId);
+      console.log(`Updated ${updatedCount} links with new member: ${userId}`);
+    } catch (error) {
+      console.error('Error updating links with new member:', error);
+      // リンクの更新に失敗してもグループへの参加自体は成功とする
+    }
+    
     return true;
   } catch (error) {
     console.error('Error joining group:', error);
