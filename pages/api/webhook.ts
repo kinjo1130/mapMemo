@@ -12,12 +12,40 @@ import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 import { joinGroup } from '@/lib/Group/joinGroup';
 import { IsJoinGroup } from '@/lib/Group/IsJoinGroup';
 
-const isGoogleMapsUrl = (url: string) => {
-  return url.startsWith('https://maps.google.com/') ||
-    url.startsWith('https://www.google.com/maps') ||
-    url.startsWith('https://maps.app.goo.gl/') ||
-    url.startsWith('https://goo.gl/maps');
+const isGoogleMapsUrl = (text: string) => {
+  // URLを抽出するための正規表現
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = text.match(urlRegex);
+  
+  if (!urls) return false;
+  
+  // 抽出したURLのいずれかがGoogle MapsのURLであるかをチェック
+  return urls.some(url => 
+    url.includes('maps.google.com/') ||
+    url.includes('google.com/maps') ||
+    url.includes('maps.app.goo.gl/') ||
+    url.includes('goo.gl/maps')
+  );
 };
+
+const trimGoogleMapLink = (text: string): string | null => {
+  // URLを抽出するための正規表現
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = text.match(urlRegex);
+  
+  if (!urls) return null;
+  
+  // Google Maps URLを検索
+  const googleMapsUrl = urls.find(url => 
+    url.includes('maps.google.com/') ||
+    url.includes('google.com/maps') ||
+    url.includes('maps.app.goo.gl/') ||
+    url.includes('goo.gl/maps')
+  );
+  
+  return googleMapsUrl || null;
+};
+
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
@@ -77,11 +105,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
           continue;
         }
+        console.log({messageText})
 
         if (isGoogleMapsUrl(messageText)) {
           try {
             const result = await saveGoogleMapsLink({
-              mapUrl: messageText,
+              mapUrl: trimGoogleMapLink(messageText) || '',
               userId,
               groupId: groupId || ''
             });
