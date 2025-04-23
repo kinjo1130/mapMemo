@@ -11,6 +11,8 @@ interface LinkListProps {
   hasMore?: boolean;
   isLoading: boolean;
   userId: string;
+  onFilterByUser?: (userName: string) => void;
+  onFilterByGroup?: (groupName: string) => void;
 }
 
 const LinkList: React.FC<LinkListProps> = ({
@@ -20,6 +22,8 @@ const LinkList: React.FC<LinkListProps> = ({
   hasMore,
   isLoading,
   userId,
+  onFilterByUser,
+  onFilterByGroup,
 }) => {
   const [toast, setToast] = useState<{
     message: string;
@@ -27,6 +31,31 @@ const LinkList: React.FC<LinkListProps> = ({
   } | null>(null);
   const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
+
+  // 地図リンクを開く関数
+  const handleOpenMap = useCallback((link: Link) => {
+    // 場所の名前とアドレスを使ってGoogle Mapのクエリを組み立てる
+    const query = encodeURIComponent(link.name || link.address || "");
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    
+    if (query) {
+      window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
+    }
+  }, []);
+
+  // ユーザー名でフィルター
+  const handleUserFilter = useCallback((userName: string) => {
+    if (onFilterByUser) {
+      onFilterByUser(userName);
+    }
+  }, [onFilterByUser]);
+
+  // グループ名でフィルター
+  const handleGroupFilter = useCallback((groupName: string) => {
+    if (onFilterByGroup) {
+      onFilterByGroup(groupName);
+    }
+  }, [onFilterByGroup]);
 
   useEffect(() => {
     return () => {
@@ -89,7 +118,9 @@ const LinkList: React.FC<LinkListProps> = ({
             key={`${link.docId}-${index}`}
             className="overflow-hidden flex p-0 border border-gray-100 rounded-lg"
           >
-            <div className="w-28 h-28 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+            <div 
+              className="w-28 h-28 flex-shrink-0 bg-gray-100 flex items-center justify-center cursor-pointer"
+            >
               {link.photoUrl ? (
                 <img
                   src={link.photoUrl}
@@ -105,13 +136,22 @@ const LinkList: React.FC<LinkListProps> = ({
             <div className="p-3 flex-grow relative">
               <div className="flex flex-col h-full">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-base text-gray-900">
+                  <a 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleOpenMap(link);
+                    }}
+                    className="font-medium text-base text-gray-900 hover:text-blue-600 underline"
+                  >
                     {link.name}
-                  </h3>
-                  
+                  </a>
                 </div>
                 
-                <p className="text-xs text-gray-600 mb-2">
+                <p 
+                  className="text-xs text-gray-600 mb-2 cursor-pointer hover:text-blue-600"
+                  onClick={() => handleOpenMap(link)}
+                >
                   {link.address}
                 </p>
                 
@@ -125,7 +165,16 @@ const LinkList: React.FC<LinkListProps> = ({
                   ) : (
                     <div className="w-6 h-6 rounded-full bg-gray-300 mr-2"></div>
                   )}
-                  <span className="text-xs text-gray-700">{link.displayName || "ユーザー"}</span>
+                  <a 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleUserFilter(link.displayName || "");
+                    }}
+                    className="text-xs text-gray-700 hover:text-blue-600 underline"
+                  >
+                    {link.displayName || "ユーザー"}
+                  </a>
                 </div>
                 
                 {link.groupName && (
@@ -139,7 +188,16 @@ const LinkList: React.FC<LinkListProps> = ({
                     ) : (
                       <div className="w-6 h-6 rounded-full bg-gray-300 mr-2"></div>
                     )}
-                    <span className="text-xs text-gray-700">{link.groupName}</span>
+                    <a 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleGroupFilter(link.groupName || "");
+                      }}
+                      className="text-xs text-gray-700 hover:text-blue-600 underline"
+                    >
+                      {link.groupName}
+                    </a>
                   </div>
                 )}
                 

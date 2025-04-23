@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLiff } from "@/hooks/useLiff";
 import LinkList from "@/components/LinkList";
 import Header from "@/components/Header";
@@ -154,6 +154,18 @@ export default function Home() {
     }
   };
 
+  // ユーザー名でフィルタリングする関数
+  const handleFilterByUser = useCallback((userName: string) => {
+    setInputValue(userName);
+    handleSearchInputChange(userName);
+  }, [handleSearchInputChange]);
+
+  // グループ名でフィルタリングする関数
+  const handleFilterByGroup = useCallback((groupName: string) => {
+    setInputValue(groupName);
+    handleSearchInputChange(groupName);
+  }, [handleSearchInputChange]);
+
   if (profileLoading) {
     return <div>Loading...</div>;
   }
@@ -204,21 +216,26 @@ export default function Home() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="名前, 住所, 地点名, グループ名で検索"
-              className="w-full py-1 px-2 pr-16 border rounded text-base"
+              className="w-full py-2 px-3 pr-20 border rounded text-base"
             />
             {inputValue && (
-              <OctagonX
-                className="absolute right-10 top-1/2 transform -translate-y-1/2 cursor-pointer"
-                size={14}
+              <div 
+                className="absolute right-12 top-1/2 transform -translate-y-1/2 p-2 cursor-pointer"
                 onClick={handleClear}
-              />
+              >
+                <OctagonX
+                  size={28}
+                  className="text-gray-500 hover:text-gray-700"
+                />
+              </div>
             )}
             <button
               onClick={executeSearch}
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 rounded bg-primary text-white"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded bg-primary text-white hover:bg-blue-700"
               disabled={isSearching || !inputValue}
+              aria-label="検索"
             >
-              <Search size={14} />
+              <Search size={20} />
             </button>
           </div>
         </div>
@@ -234,6 +251,8 @@ export default function Home() {
               hasMore={hasMore && !searchTerm}
               isLoading={isLoading || isSearching}
               userId={profile?.userId ?? ""}
+              onFilterByUser={handleFilterByUser}
+              onFilterByGroup={handleFilterByGroup}
             />
           </div>
         )}
