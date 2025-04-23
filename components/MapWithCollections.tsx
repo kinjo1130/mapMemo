@@ -173,7 +173,7 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
   return (
     <div className="flex flex-col h-full">
       {/* コンパクトなセレクトUI */}
-      <div className="p-1 bg-white shadow-sm flex items-center space-x-1">
+      <div className="p-2 bg-white shadow-sm flex items-center space-x-2">
         {activeTab === "groups" && (
           <select
             value={selectedGroup || ""}
@@ -183,7 +183,8 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
                 handleGroupSelect(groupId);
               }
             }}
-            className="text-xs py-1 px-1 border border-gray-200 rounded flex-grow"
+            className="text-sm py-2 px-3 border border-gray-300 rounded flex-grow appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+            style={{ minHeight: '36px' }}
           >
             <option value="">グループを選択</option>
             {groups?.map((group) => (
@@ -203,7 +204,8 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
                 handleCollectionSelect(collectionId);
               }
             }}
-            className="text-xs py-1 px-1 border border-gray-200 rounded flex-grow"
+            className="text-sm py-2 px-3 border border-gray-300 rounded flex-grow appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+            style={{ minHeight: '36px' }}
           >
             <option value="">コレクションを選択</option>
             {collections.map((collection) => (
@@ -224,8 +226,8 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
                   toggleGroupFilter(groupId);
                 }
               }}
-              className="text-xs py-1 px-1 border border-gray-200 rounded"
-              style={{ maxWidth: '120px' }}
+              className="text-sm py-2 px-3 border border-gray-300 rounded appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+              style={{ minWidth: '120px', minHeight: '36px' }}
             >
               <option value="">グループ</option>
               {groups?.map((group) => (
@@ -243,8 +245,8 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
                   toggleCollectionFilter(collectionId);
                 }
               }}
-              className="text-xs py-1 px-1 border border-gray-200 rounded"
-              style={{ maxWidth: '120px' }}
+              className="text-sm py-2 px-3 border border-gray-300 rounded appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+              style={{ minWidth: '120px', minHeight: '36px' }}
             >
               <option value="">コレクション</option>
               {collections.map((collection) => (
