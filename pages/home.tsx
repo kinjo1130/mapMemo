@@ -15,6 +15,7 @@ import CollectionDetail from "@/components/CollectionDetail";
 import { CollectionList } from "@/components/CollectionList";
 import { useRouter } from "next/router";
 import { getCollectionById } from '@/lib/Collection'; // Collectionライブラリをインポート
+import Toast from "@/components/Toast"; // Toastコンポーネントをインポート
 
 export default function Home() {
   const { profile, loading: profileLoading } = useProfile();
@@ -25,6 +26,12 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
   const [isLoadingCollection, setIsLoadingCollection] = useState(false);
+  // Toast表示用の状態
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
 
   const {
     links,
@@ -150,7 +157,29 @@ export default function Home() {
   const handleGroupSelect = (groupId: string) => {
     handleSelectGroup(groupId);
     if (profile) {
-      searchLinksByGroup(profile.userId, groupId);
+      if (groupId === "") {
+        // 「すべてのグループ」が選択された場合は全データを読み込み、新しい順（最新の投稿が上）にソート
+        loadLinks(profile.userId);
+        // 検索状態をリセットして、フィルターを解除する
+        clearSearchTerm();
+        // Toast通知を表示
+        setToast({
+          show: true,
+          message: "すべてのグループを表示しています",
+          type: "success"
+        });
+      } else {
+        // 特定のグループが選択された場合はそのグループでフィルタリング
+        searchLinksByGroup(profile.userId, groupId);
+        // 選択したグループ名を取得
+        const selectedGroupName = groups?.find(g => g.groupId === groupId)?.groupName || "選択したグループ";
+        // Toast通知を表示
+        setToast({
+          show: true,
+          message: `${selectedGroupName}のみ表示しています`,
+          type: "success"
+        });
+      }
     }
   };
 
@@ -193,6 +222,14 @@ export default function Home() {
           onClick={() => handleTabChange("collections")}
         />
       </div>
+      {/* Toast通知 */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
       {activeTab === "list" && (
         <div className="px-2 py-1 bg-white">
           <div className="flex items-center gap-1 mb-2 mt-1">
