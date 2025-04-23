@@ -204,7 +204,7 @@ export default function Home() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="名前, 住所, 地点名, グループ名で検索"
-              className="w-full py-1 px-2 pr-16 border rounded text-xs"
+              className="w-full py-1 px-2 pr-16 border rounded text-base"
             />
             {inputValue && (
               <OctagonX
