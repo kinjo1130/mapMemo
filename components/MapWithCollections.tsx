@@ -174,17 +174,6 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
     <div className="flex flex-col h-full">
       {/* コンパクトなセレクトUI */}
       <div className="p-1 bg-white shadow-sm flex items-center space-x-1">
-        <select
-          value={activeTab}
-          onChange={(e) => setActiveTab(e.target.value as "all" | "groups" | "collections")}
-          className="text-xs py-1 px-1 border border-gray-200 rounded"
-          style={{ maxWidth: '80px' }}
-        >
-          <option value="all">すべて</option>
-          <option value="groups">グループ</option>
-          <option value="collections">コレクション</option>
-        </select>
-        
         {activeTab === "groups" && (
           <select
             value={selectedGroup || ""}

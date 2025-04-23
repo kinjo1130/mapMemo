@@ -11,7 +11,7 @@ interface TabButtonProps {
 
 export const TabButton: React.FC<TabButtonProps> = ({ tab, label, activeTab, onClick }) => (
   <button
-    className={`py-1 px-3 mt-1 text-sm ${
+    className={`py-2 px-4 mt-1 text-base ${
       activeTab === tab
         ? "bg-primary text-white"
         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
