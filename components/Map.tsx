@@ -201,8 +201,8 @@ const Map: React.FC<MapProps> = ({ links }) => {
     return (zoom: number, isSelected: boolean) => {
       // ズームレベルに応じたピンのサイズ調整
       // ズーム値が小さい（広域表示）ほど小さく、大きい（詳細表示）ほど大きくする
-      const baseSize = Math.max(zoom - 5, 2); // 最小サイズは2
-      const size = isSelected ? baseSize * 1.2 : baseSize; // 選択中は少し大きく
+      const baseSize = Math.max(zoom - 3, 3); // 最小サイズを3に増加、ズーム係数を調整
+      const size = isSelected ? baseSize * 1.3 : baseSize * 1.1; // 全体的にサイズを大きく
       
       // ラベル（地点名）の表示設定
       // ズームレベルが一定以上の場合のみラベルを表示
