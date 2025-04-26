@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Search, OctagonX } from "lucide-react";
 import Map from "./Map";
 import { useLinks } from "@/hooks/useLinks";
 import { useGroup } from "@/hooks/useGroup";
@@ -15,6 +15,8 @@ interface MapWithCollectionsProps {
 }
 
 const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filteredLinks, setFilteredLinks] = useState<Link[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "groups" | "collections">("all");
   const [selectedFilters, setSelectedFilters] = useState<{
     groups: string[];
@@ -121,6 +123,25 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
     updateDisplayLinks();
   }, [activeTab, selectedGroup, selectedCollection, links, selectedFilters]);
 
+  useEffect(() => {
+    // 検索語句に基づいてリンクをフィルタリングする
+    if (searchTerm.trim() === '') {
+      // 検索語句が空の場合は、現在の表示リンクをそのまま使用
+      setFilteredLinks(displayLinks);
+    } else {
+      // 検索語句が存在する場合は、名前、住所、グループ名でフィルタリング
+      const filtered = displayLinks.filter(link => {
+        const searchTermLower = searchTerm.toLowerCase();
+        const nameMatch = link.name && link.name.toLowerCase().includes(searchTermLower);
+        const addressMatch = link.address && link.address.toLowerCase().includes(searchTermLower);
+        const groupNameMatch = link.groupName && link.groupName.toLowerCase().includes(searchTermLower);
+        
+        return nameMatch || addressMatch || groupNameMatch;
+      });
+      setFilteredLinks(filtered);
+    }
+  }, [searchTerm, displayLinks]);
+
   // グループ選択ハンドラー
   const handleGroupSelect = (groupId: string) => {
     setSelectedGroup(groupId);
@@ -132,176 +153,150 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
     setSelectedCollection(collectionId);
     setActiveTab("collections");
   };
-  
-  // フィルター選択ハンドラー（すべてタブ用）
-  const toggleGroupFilter = (groupId: string) => {
-    setSelectedFilters(prev => {
-      const isSelected = prev.groups.includes(groupId);
-      return {
-        ...prev,
-        groups: isSelected 
-          ? prev.groups.filter(id => id !== groupId)
-          : [...prev.groups, groupId]
-      };
-    });
-  };
-  
-  const toggleCollectionFilter = (collectionId: string) => {
-    setSelectedFilters(prev => {
-      const isSelected = prev.collections.includes(collectionId);
-      return {
-        ...prev,
-        collections: isSelected 
-          ? prev.collections.filter(id => id !== collectionId)
-          : [...prev.collections, collectionId]
-      };
-    });
-  };
-
-  // 選択されたグループまたはコレクションの情報
-  const selectedGroupInfo = selectedGroup ? groups?.find(g => g.groupId === selectedGroup) : null;
-  const selectedCollectionInfo = selectedCollection ? collections.find(c => c.collectionId === selectedCollection) : null;
-
-  // 選択をクリア
-  const clearSelection = () => {
-    setSelectedGroup(null);
-    setSelectedCollection(null);
-    setSelectedFilters({ groups: [], collections: [] });
-    setActiveTab("all");
-  };
 
   return (
     <div className="flex flex-col h-full">
       {/* コンパクトなセレクトUI */}
-      <div className="p-2 bg-white shadow-sm flex items-center space-x-2">
-        {activeTab === "groups" && (
-          <select
-            value={selectedGroup || ""}
-            onChange={(e) => {
-              const groupId = e.target.value;
-              if (groupId) {
-                handleGroupSelect(groupId);
-              }
-            }}
-            className="text-sm py-2 px-3 border border-gray-300 rounded flex-grow appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
-            style={{ minHeight: '36px' }}
-          >
-            <option value="">グループを選択</option>
-            {groups?.map((group) => (
-              <option key={group.groupId} value={group.groupId}>
-                {group.groupName}
-              </option>
-            ))}
-          </select>
-        )}
+      <div className="p-2 bg-white shadow-sm flex flex-col space-y-2">
+        {/* 検索ボックス - すべてのタブで表示 */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            placeholder="場所やグループ名を検索..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-2 pl-10 pr-3 text-base border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <Search size={18} />
+          </div>
+          {searchTerm && (
+            <button
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onClick={() => setSearchTerm("")}
+            >
+             <OctagonX
+              size={28}
+              className="text-gray-500 hover:text-gray-700"
+              />
+            </button>
+          )}
+        </div>
         
-        {activeTab === "collections" && (
-          <select
-            value={selectedCollection || ""}
-            onChange={(e) => {
-              const collectionId = e.target.value;
-              if (collectionId) {
-                handleCollectionSelect(collectionId);
-              }
-            }}
-            className="text-sm py-2 px-3 border border-gray-300 rounded flex-grow appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
-            style={{ minHeight: '36px' }}
-          >
-            <option value="">コレクションを選択</option>
-            {collections.map((collection) => (
-              <option key={collection.collectionId} value={collection.collectionId}>
-                {collection.title}
-              </option>
-            ))}
-          </select>
-        )}
-        
-        {activeTab === "all" && (
-          <>
+        {/* グループ、コレクション選択メニュー - 一段下げて表示 */}
+        <div className="flex space-x-2">
+          {activeTab === "groups" && (
             <select
-              value=""
+              value={selectedGroup || ""}
               onChange={(e) => {
                 const groupId = e.target.value;
                 if (groupId) {
-                  toggleGroupFilter(groupId);
+                  handleGroupSelect(groupId);
                 }
               }}
-              className="text-sm py-2 px-3 border border-gray-300 rounded appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
-              style={{ minWidth: '120px', minHeight: '36px' }}
+              className="text-sm py-1 px-2 border border-gray-300 rounded flex-grow appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+              style={{ minHeight: '36px' }}
             >
-              <option value="">グループ</option>
+              <option value="">グループを選択</option>
               {groups?.map((group) => (
                 <option key={group.groupId} value={group.groupId}>
                   {group.groupName}
                 </option>
               ))}
             </select>
-            
+          )}
+          
+          {activeTab === "collections" && (
             <select
-              value=""
+              value={selectedCollection || ""}
               onChange={(e) => {
                 const collectionId = e.target.value;
                 if (collectionId) {
-                  toggleCollectionFilter(collectionId);
+                  handleCollectionSelect(collectionId);
                 }
               }}
-              className="text-sm py-2 px-3 border border-gray-300 rounded appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
-              style={{ minWidth: '120px', minHeight: '36px' }}
+              className="text-sm py-1 px-2 border border-gray-300 rounded flex-grow appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+              style={{ minHeight: '36px' }}
             >
-              <option value="">コレクション</option>
+              <option value="">コレクションを選択</option>
               {collections.map((collection) => (
                 <option key={collection.collectionId} value={collection.collectionId}>
                   {collection.title}
                 </option>
               ))}
             </select>
-          </>
-        )}
-        
-        {(selectedGroup || selectedCollection || selectedFilters.groups.length > 0 || selectedFilters.collections.length > 0) && (
-          <button 
-            onClick={clearSelection}
-            className="text-xs text-blue-500 hover:text-blue-700 flex items-center"
-          >
-            <X size={12} />
-          </button>
-        )}
-      </div>
-
-      {/* 選択情報 */}
-      {(selectedFilters.groups.length > 0 || selectedFilters.collections.length > 0) && activeTab === "all" && (
-        <div className="p-1 bg-gray-50 flex flex-wrap gap-1">
-          {selectedFilters.groups.map(groupId => {
-            const group = groups?.find(g => g.groupId === groupId);
-            return group ? (
-              <div key={groupId} className="flex items-center bg-blue-50 text-blue-800 px-1 py-0.5 rounded text-xs">
-                <span className="truncate max-w-[80px]">{group.groupName}</span>
-                <button 
-                  onClick={() => toggleGroupFilter(groupId)}
-                  className="ml-1 text-blue-500"
-                >
-                  <X size={10} />
-                </button>
-              </div>
-            ) : null;
-          })}
+          )}
           
-          {selectedFilters.collections.map(collectionId => {
-            const collection = collections.find(c => c.collectionId === collectionId);
-            return collection ? (
-              <div key={collectionId} className="flex items-center bg-blue-50 text-blue-800 px-1 py-0.5 rounded text-xs">
-                <span className="truncate max-w-[80px]">{collection.title}</span>
-                <button 
-                  onClick={() => toggleCollectionFilter(collectionId)}
-                  className="ml-1 text-blue-500"
-                >
-                  <X size={10} />
-                </button>
-              </div>
-            ) : null;
-          })}
+          {activeTab === "all" && (
+            <>
+              <select
+                value={selectedFilters.groups.length > 0 ? selectedFilters.groups[0] : ""}
+                onChange={(e) => {
+                  const groupId = e.target.value;
+                  if (groupId) {
+                    // 新しいグループが選択された場合は以前の選択をクリアして新しい選択を設定
+                    setSelectedFilters(prev => ({
+                      ...prev,
+                      groups: [groupId] // 複数選択ではなく単一選択に変更
+                    }));
+                  } else {
+                    // 空の選択肢が選ばれた場合はグループフィルターをクリア
+                    setSelectedFilters(prev => ({
+                      ...prev,
+                      groups: []
+                    }));
+                  }
+                }}
+                className="text-sm py-1 px-2 border border-gray-300 rounded appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ minWidth: '120px', minHeight: '36px' }}
+              >
+                <option value="">グループ</option>
+                {groups?.map((group) => (
+                  <option 
+                    key={group.groupId} 
+                    value={group.groupId}
+                  >
+                    {group.groupName}
+                  </option>
+                ))}
+              </select>
+              
+              <select
+                value={selectedFilters.collections.length > 0 ? selectedFilters.collections[0] : ""}
+                onChange={(e) => {
+                  const collectionId = e.target.value;
+                  if (collectionId) {
+                    // 新しいコレクションが選択された場合は以前の選択をクリアして新しい選択を設定
+                    setSelectedFilters(prev => ({
+                      ...prev,
+                      collections: [collectionId] // 複数選択ではなく単一選択に変更
+                    }));
+                  } else {
+                    // 空の選択肢が選ばれた場合はコレクションフィルターをクリア
+                    setSelectedFilters(prev => ({
+                      ...prev,
+                      collections: []
+                    }));
+                  }
+                }}
+                className="text-sm py-1 px-2 border border-gray-300 rounded appearance-none bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ minWidth: '120px', minHeight: '36px' }}
+              >
+                <option value="">コレクション</option>
+                {collections.map((collection) => (
+                  <option 
+                    key={collection.collectionId} 
+                    value={collection.collectionId}
+                  >
+                    {collection.title}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
         </div>
-      )}
+      </div>
+        
       
       {/* 地図 */}
       <div className="flex-grow relative">
@@ -310,7 +305,7 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           </div>
         ) : (
-          <Map links={displayLinks} />
+          <Map links={filteredLinks} />
         )}
       </div>
     </div>
