@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import ReactMapGL, {
   Marker,
   Popup,
@@ -196,6 +196,26 @@ const Map: React.FC<MapProps> = ({ links }) => {
     setIsRouteSelectionMode(false);
   };
 
+  // ズームレベルに応じたマーカーのスタイル設定を計算する
+  const getMarkerStyle = useMemo(() => {
+    return (zoom: number, isSelected: boolean) => {
+      // ズームレベルに応じたピンのサイズ調整
+      // ズーム値が小さい（広域表示）ほど小さく、大きい（詳細表示）ほど大きくする
+      const baseSize = Math.max(zoom - 5, 2); // 最小サイズは2
+      const size = isSelected ? baseSize * 1.2 : baseSize; // 選択中は少し大きく
+      
+      // ラベル（地点名）の表示設定
+      // ズームレベルが一定以上の場合のみラベルを表示
+      const showLabel = zoom >= 10;
+      
+      // ピンか点かを決定
+      // ズームレベルが小さい場合（10未満）は点表示、それ以上はピン表示
+      const usePin = zoom >= 10;
+      
+      return { size, showLabel, usePin };
+    };
+  }, []);
+
   return (
     <div className="h-full w-full relative">
       <ReactMapGL
@@ -263,23 +283,63 @@ const Map: React.FC<MapProps> = ({ links }) => {
           </div>
         )}
 
-        {validLinks.map((link) => (
-          <Marker
-            key={link.docId}
-            longitude={link.lng ?? DEFAULT_LONGITUDE}
-            latitude={link.lat ?? DEFAULT_LATITUDE}
-            color={selectedMarkers.some(marker => marker.docId === link.docId) ? "blue" : "red"}
-            onClick={(e: any) => handleMarkerClick(e, link)}
-          >
-            {selectedMarkers.some(marker => marker.docId === link.docId) && (
-              <div className="relative">
-                <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold border-2 border-white shadow-md">
-                  {selectedMarkers.findIndex(marker => marker.docId === link.docId) + 1}
-                </div>
+        {validLinks.map((link) => {
+          const isSelected = selectedMarkers.some(marker => marker.docId === link.docId);
+          const { size, showLabel, usePin } = getMarkerStyle(viewState.zoom, isSelected);
+          return (
+            <Marker
+              key={link.docId}
+              longitude={link.lng ?? DEFAULT_LONGITUDE}
+              latitude={link.lat ?? DEFAULT_LATITUDE}
+              onClick={(e: any) => handleMarkerClick(e, link)}
+            >
+              <div className="marker-container">
+                {/* ズームレベルに応じて表示を切り替え */}
+                {usePin ? (
+                  <div 
+                    style={{ 
+                      transform: `scale(${size / 10})`, 
+                      transformOrigin: 'bottom center' 
+                    }}
+                  >
+                    <MapPin 
+                      size={24} 
+                      color={isSelected ? "#1d4ed8" : "#ef4444"} 
+                      fill={isSelected ? "#93c5fd" : "#fca5a5"} 
+                      strokeWidth={2} 
+                    />
+                  </div>
+                ) : (
+                  <div 
+                    style={{ 
+                      width: `${size * 3}px`, 
+                      height: `${size * 3}px` 
+                    }}
+                    className={`rounded-full border-2 ${
+                      isSelected 
+                        ? "bg-blue-200 border-blue-600" 
+                        : "bg-red-200 border-red-600"
+                    }`}
+                  />
+                )}
+                
+                {/* 選択されたマーカーには番号を表示 */}
+                {isSelected && (
+                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold border-2 border-white shadow-md">
+                    {selectedMarkers.findIndex(marker => marker.docId === link.docId) + 1}
+                  </div>
+                )}
+                
+                {/* ズームレベルが十分ある場合は地点名を表示 */}
+                {showLabel && (
+                  <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-white px-2 py-0.5 rounded text-xs font-medium shadow-md">
+                    {link.name}
+                  </div>
+                )}
               </div>
-            )}
-          </Marker>
-        ))}
+            </Marker>
+          );
+        })}
 
         {!isRouteSelectionMode && selectedMarker &&
           typeof selectedMarker.lng === "number" &&
