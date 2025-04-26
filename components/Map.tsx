@@ -143,24 +143,37 @@ const Map: React.FC<MapProps> = ({ links }) => {
     }
   }, [isRouteSelectionMode]);
 
-  // Google マップでルート表示を開く関数
-  const openRouteInGoogleMaps = () => {
-    if (selectedMarkers.length < 2) {
-      alert('ルート案内には少なくとも2つのポイントを選択してください');
-      return;
-    }
+  // 現在位置を取得する関数
+const getCurrentPosition = async (): Promise<GeolocationPosition> => {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
+};
 
+// Google マップでルート表示を開く関数
+const openRouteInGoogleMaps = async () => {
+  if (selectedMarkers.length < 2) {
+    alert('ルート案内には少なくとも2つのポイントを選択してください');
+    return;
+  }
+
+  try {
+    // 現在位置を取得
+    const position = await getCurrentPosition();
+    const { latitude, longitude } = position.coords;
+    
+    console.log("現在位置:", latitude, longitude);
+    
     // Google Maps APIの形式に従ったURLを構築
     let googleMapsUrl = 'https://www.google.com/maps/dir/?api=1';
-
-    // 出発地点は現在地を使用
-    googleMapsUrl += '&origin=現在地';
-
-    // 最初のマーカーを最初の経由地として設定
+    
+    // 出発地点として現在の正確な位置を設定
+    googleMapsUrl += `&origin=${latitude},${longitude}`;
+    
     // 最後のマーカーを目的地として設定
     const destination = selectedMarkers[selectedMarkers.length - 1];
     googleMapsUrl += `&destination=${destination.lat},${destination.lng}`;
-
+    
     // 中間地点がある場合は経由地として追加（最後のマーカー以外すべて）
     if (selectedMarkers.length > 1) {
       const waypoints = selectedMarkers.slice(0, selectedMarkers.length - 1)
@@ -169,13 +182,18 @@ const Map: React.FC<MapProps> = ({ links }) => {
       
       googleMapsUrl += `&waypoints=${waypoints}`;
     }
-
+    
     // 交通手段を設定（車）
     googleMapsUrl += '&travelmode=driving';
-
+    
     // 新しいタブでGoogle Mapsを開く
     window.open(googleMapsUrl, '_blank');
-  };
+    
+  } catch (error) {
+    console.error("位置情報の取得に失敗しました:", error);
+    alert("位置情報の取得に失敗しました。ブラウザの位置情報へのアクセスを許可してください。");
+  }
+};
 
   // ルート選択モードをトグルする関数
   const toggleRouteSelectionMode = () => {
