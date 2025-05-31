@@ -3,6 +3,7 @@ import { MapPin, Trash2, MessageCircle, BookmarkPlus } from "lucide-react";
 import Toast from "./Toast";
 import CollectionModal from "./CollectionModal";
 import type { Link } from "@/types/Link";
+import { formatDate } from "@/utils/date";
 
 interface LinkListProps {
   links: Link[];
@@ -198,6 +199,15 @@ const LinkList: React.FC<LinkListProps> = ({
                     >
                       {link.groupName}
                     </a>
+                  </div>
+                )}
+                
+                {/* 保存日付を表示 */}
+                {link.timestamp && (
+                  <div className="mb-2">
+                    <span className="text-xs text-gray-500">
+                      保存日: {formatDate(link.timestamp)}
+                    </span>
                   </div>
                 )}
                 

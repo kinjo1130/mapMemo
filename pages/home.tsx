@@ -32,7 +32,9 @@ export default function Home() {
     isSearching,
     hasMore,
     isLoading,
+    sortOrder,
     handleSearchInputChange,
+    handleSortChange,
     handleLoadMore,
     handleDelete,
     loadLinks,
@@ -199,7 +201,7 @@ export default function Home() {
             <select
               value={selectedGroup?.groupId ?? ""}
               onChange={(e)=>handleGroupSelect(e.target.value)}
-              className="w-full py-1 px-2 border rounded text-xs"
+              className="flex-1 py-1 px-2 border rounded text-xs"
             >
               <option value="">すべてのグループ</option>
               {groups?.map((group) => (
@@ -207,6 +209,14 @@ export default function Home() {
                   {group.groupName}
                 </option>
               ))}
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => handleSortChange(e.target.value as 'saved' | 'name')}
+              className="py-1 px-2 border rounded text-xs"
+            >
+              <option value="saved">保存順</option>
+              <option value="name">名前順</option>
             </select>
           </div>
           <div className="relative flex items-center">
