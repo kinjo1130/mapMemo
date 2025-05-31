@@ -4,6 +4,7 @@ export default function Document() {
   return (
     <Html lang="ja">
       <Head>
+        <title>Map Memo - 地図上の場所を簡単に保存・共有</title>
         <meta name="application-name" content="MapMemo" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
