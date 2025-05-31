@@ -13,6 +13,7 @@ import liff from "@line/liff";
 import { Collection } from "@/types/Collection";
 import CollectionDetail from "@/components/CollectionDetail";
 import { CollectionList } from "@/components/CollectionList";
+import DateRangeFilter from "@/components/DateRangeFilter";
 import { useRouter } from "next/router";
 import { getCollectionById } from '@/lib/Collection'; // Collectionライブラリをインポート
 
@@ -33,8 +34,11 @@ export default function Home() {
     hasMore,
     isLoading,
     sortOrder,
+    dateRange,
     handleSearchInputChange,
     handleSortChange,
+    handleDateRangeChange,
+    clearDateRange,
     handleLoadMore,
     handleDelete,
     loadLinks,
@@ -254,6 +258,12 @@ export default function Home() {
         {activeTab === "map" && <MapWithCollections userId={profile?.userId ?? ""} />}
         {activeTab === "list" && (
           <div className="h-full overflow-auto p-4">
+            <DateRangeFilter
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+              onDateRangeChange={handleDateRangeChange}
+              onClear={clearDateRange}
+            />
             <LinkList
               links={links}
               onDelete={handleDelete}
