@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, ChevronDown, Search, OctagonX } from "lucide-react";
 import Map from "./Map";
+import DateRangeFilter from "./DateRangeFilter";
 import { useLinks } from "@/hooks/useLinks";
 import { useGroup } from "@/hooks/useGroup";
 import { getAllCollectionLinks } from "@/lib/Collection";
@@ -24,6 +25,10 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
   }>({
     groups: [],
     collections: []
+  });
+  const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>({
+    startDate: null,
+    endDate: null
   });
   const [collections, setCollections] = useState<Collection[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -124,23 +129,49 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
   }, [activeTab, selectedGroup, selectedCollection, links, selectedFilters]);
 
   useEffect(() => {
+    let filtered = displayLinks;
+
     // 検索語句に基づいてリンクをフィルタリングする
-    if (searchTerm.trim() === '') {
-      // 検索語句が空の場合は、現在の表示リンクをそのまま使用
-      setFilteredLinks(displayLinks);
-    } else {
-      // 検索語句が存在する場合は、名前、住所、グループ名でフィルタリング
-      const filtered = displayLinks.filter(link => {
-        const searchTermLower = searchTerm.toLowerCase();
+    if (searchTerm.trim() !== '') {
+      const searchTermLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(link => {
         const nameMatch = link.name && link.name.toLowerCase().includes(searchTermLower);
         const addressMatch = link.address && link.address.toLowerCase().includes(searchTermLower);
         const groupNameMatch = link.groupName && link.groupName.toLowerCase().includes(searchTermLower);
         
         return nameMatch || addressMatch || groupNameMatch;
       });
-      setFilteredLinks(filtered);
     }
-  }, [searchTerm, displayLinks]);
+
+    // 日付範囲でフィルタリング
+    if (dateRange.startDate || dateRange.endDate) {
+      filtered = filtered.filter(link => {
+        if (!link.timestamp) return false;
+        
+        const linkDate = link.timestamp.toDate();
+        linkDate.setHours(0, 0, 0, 0); // 時刻を00:00:00にリセット
+        
+        if (dateRange.startDate && dateRange.endDate) {
+          const startDate = new Date(dateRange.startDate);
+          const endDate = new Date(dateRange.endDate);
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
+          return linkDate >= startDate && linkDate <= endDate;
+        } else if (dateRange.startDate) {
+          const startDate = new Date(dateRange.startDate);
+          startDate.setHours(0, 0, 0, 0);
+          return linkDate >= startDate;
+        } else if (dateRange.endDate) {
+          const endDate = new Date(dateRange.endDate);
+          endDate.setHours(23, 59, 59, 999);
+          return linkDate <= endDate;
+        }
+        return true;
+      });
+    }
+
+    setFilteredLinks(filtered);
+  }, [searchTerm, displayLinks, dateRange]);
 
   // グループ選択ハンドラー
   const handleGroupSelect = (groupId: string) => {
@@ -182,6 +213,14 @@ const MapWithCollections: React.FC<MapWithCollectionsProps> = ({ userId }) => {
             </button>
           )}
         </div>
+
+        {/* 日付範囲フィルター */}
+        <DateRangeFilter
+          startDate={dateRange.startDate}
+          endDate={dateRange.endDate}
+          onDateRangeChange={(startDate, endDate) => setDateRange({ startDate, endDate })}
+          onClear={() => setDateRange({ startDate: null, endDate: null })}
+        />
         
         {/* グループ、コレクション選択メニュー - 一段下げて表示 */}
         <div className="flex space-x-2">

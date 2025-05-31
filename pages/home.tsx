@@ -13,6 +13,7 @@ import liff from "@line/liff";
 import { Collection } from "@/types/Collection";
 import CollectionDetail from "@/components/CollectionDetail";
 import { CollectionList } from "@/components/CollectionList";
+import DateRangeFilter from "@/components/DateRangeFilter";
 import { useRouter } from "next/router";
 import { getCollectionById } from '@/lib/Collection'; // Collectionライブラリをインポート
 
@@ -32,7 +33,12 @@ export default function Home() {
     isSearching,
     hasMore,
     isLoading,
+    sortOrder,
+    dateRange,
     handleSearchInputChange,
+    handleSortChange,
+    handleDateRangeChange,
+    clearDateRange,
     handleLoadMore,
     handleDelete,
     loadLinks,
@@ -199,7 +205,7 @@ export default function Home() {
             <select
               value={selectedGroup?.groupId ?? ""}
               onChange={(e)=>handleGroupSelect(e.target.value)}
-              className="w-full py-1 px-2 border rounded text-xs"
+              className="flex-1 py-1 px-2 border rounded text-xs"
             >
               <option value="">すべてのグループ</option>
               {groups?.map((group) => (
@@ -207,6 +213,14 @@ export default function Home() {
                   {group.groupName}
                 </option>
               ))}
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => handleSortChange(e.target.value as 'saved' | 'name')}
+              className="py-1 px-2 border rounded text-xs"
+            >
+              <option value="saved">保存順</option>
+              <option value="name">名前順</option>
             </select>
           </div>
           <div className="relative flex items-center">
@@ -244,6 +258,12 @@ export default function Home() {
         {activeTab === "map" && <MapWithCollections userId={profile?.userId ?? ""} />}
         {activeTab === "list" && (
           <div className="h-full overflow-auto p-4">
+            <DateRangeFilter
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+              onDateRangeChange={handleDateRangeChange}
+              onClear={clearDateRange}
+            />
             <LinkList
               links={links}
               onDelete={handleDelete}
