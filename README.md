@@ -29,7 +29,7 @@ Map Memoは、LINEボットを通じてGoogle Mapsのリンクを簡単に保存
 
 2. 依存関係をインストール:
    ```
-   npm install
+   pnpm install
    ```
 
 3. 環境変数を設定:
@@ -45,7 +45,7 @@ Map Memoは、LINEボットを通じてGoogle Mapsのリンクを簡単に保存
 
 4. アプリケーションを起動:
    ```
-   npm run dev
+   pnpm run dev
    ```
 
 ## 📖 使用方法
