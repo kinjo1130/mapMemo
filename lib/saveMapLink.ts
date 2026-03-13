@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, updateDoc, doc, runTransaction, arrayUnion } from 'firebase/firestore';
+import { collection, serverTimestamp, doc, setDoc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db } from './init/firebase';
 import { SaveMapLinkParams } from '@/types/Link';
 
@@ -16,8 +16,11 @@ export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
       groupPictureUrl
     } = params;
 
-    // Firestoreに保存するデータを作成
+    // IDを事前生成して1回のsetDocで保存
+    const newDocRef = doc(collection(db, 'Links'));
+
     const linkData = {
+      docId: newDocRef.id,
       userId,
       groupId: groupId || '',
       link,
@@ -35,34 +38,32 @@ export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
       groupPictureUrl
     };
 
-    // Firestoreに保存
-    const docRef = await addDoc(collection(db, 'Links'), linkData);
+    // Firestore保存とグループ更新を並列化
+    const promises: Promise<void>[] = [setDoc(newDocRef, linkData)];
 
-    // ドキュメントIDを取得してデータに追加
-    await updateDoc(doc(db, 'Links', docRef.id), {
-      docId: docRef.id
-    });
-
-    // usersコレクションに所属しているGroupIdを更新
     if (groupId) {
       const userRef = doc(db, 'users', userId);
-      await runTransaction(db, async (transaction) => {
-        const userDoc = await transaction.get(userRef);
+      promises.push(
+        runTransaction(db, async (transaction) => {
+          const userDoc = await transaction.get(userRef);
 
-        if (!userDoc.exists()) {
-          throw new Error("ユーザードキュメントが存在しません");
-        }
+          if (!userDoc.exists()) {
+            throw new Error("ユーザードキュメントが存在しません");
+          }
 
-        const userData = userDoc.data();
-        const joinedGroups = userData.isJoinedGroups || [];
+          const userData = userDoc.data();
+          const joinedGroups = userData.isJoinedGroups || [];
 
-        if (!joinedGroups.includes(groupId)) {
-          transaction.update(userRef, {
-            isJoinedGroups: arrayUnion(groupId)
-          });
-        }
-      });
+          if (!joinedGroups.includes(groupId)) {
+            transaction.update(userRef, {
+              isJoinedGroups: arrayUnion(groupId)
+            });
+          }
+        })
+      );
     }
+
+    await Promise.all(promises);
 
     console.log('Link and place details saved to Firestore with document ID');
   } catch (error) {

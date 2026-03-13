@@ -3,7 +3,6 @@ import { client } from '../../lib/init/line';
 import { saveUserProfile } from '../../lib/User/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
-import { isWithinUserPeriod } from '@/lib/User/checkUserPeriod';
 import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
 import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
@@ -11,6 +10,8 @@ import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 import { joinGroup } from '@/lib/Group/joinGroup';
 import { IsJoinGroup } from '@/lib/Group/IsJoinGroup';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/init/firebase';
 
 const isGoogleMapsUrl = (text: string) => {
   // URLを抽出するための正規表現
@@ -47,11 +48,27 @@ const trimGoogleMapLink = (text: string): string | null => {
 };
 
 
+/** ユーザードキュメントのデータから期間内かどうかをチェック */
+const isWithinPeriodFromData = (userData: Record<string, any> | undefined, timestamp: Date): boolean => {
+  if (!userData || !userData.period) return true;
+  const { startDate, endDate } = userData.period;
+  if (!startDate && !endDate) return true;
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
+  if (start && end) return timestamp >= start && timestamp <= end;
+  if (start && !end) return timestamp >= start;
+  if (!start && end) return timestamp <= end;
+  return true;
+};
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
     const events = req.body.events;
     console.log(`Received ${events} `);
     console.log(`Received ${events.length} events`);
+
+    // 即座に200を返却 — LINEは処理完了を待つ必要がない
+    res.status(200).send('OK');
 
     for (const event of events) {
       console.log(`Processing event: ${JSON.stringify(event)}`);
@@ -78,20 +95,29 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         console.log(`ReplyToken: ${replyToken}`);
         console.log(`Message: ${messageText}`);
-        // グループメッセージの場合、グループ情報を取得または保存
-        if (groupId) {
-          try {
-            const groupInfo = await getOrFetchGroupInfo(groupId, userId);
-            console.log(`Group info: ${JSON.stringify(groupInfo)}`);
-          } catch (error) {
-            console.error('Error getting or fetching group info:', error);
-          }
+
+        // グループ情報取得とユーザードキュメント取得を並列化
+        const [groupInfo, userDoc] = await Promise.all([
+          groupId
+            ? getOrFetchGroupInfo(groupId, userId).catch((error) => {
+                console.error('Error getting or fetching group info:', error);
+                return null;
+              })
+            : Promise.resolve(null),
+          getDoc(doc(db, 'users', userId)),
+        ]);
+
+        if (groupInfo) {
+          console.log(`Group info: ${JSON.stringify(groupInfo)}`);
         }
-        const userExists = await checkUserExists(userId);
-        if (!userExists) {
+
+        // ユーザー存在チェック（取得済みのドキュメントで判定）
+        if (!userDoc.exists()) {
           console.log(`User ${userId} is not registered`);
-          return
+          return;
         }
+
+        const userData = userDoc.data();
 
         // 期間設定変更のチェック
         if (messageText === '保存期間変更') {
@@ -99,8 +125,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           continue;
         }
 
-        // 期間内かどうかのチェック
-        const withinPeriod = await isWithinUserPeriod(userId, timestamp);
+        // 期間内かどうかのチェック（取得済みのデータで判定）
+        const withinPeriod = isWithinPeriodFromData(userData, timestamp);
         if (!withinPeriod) {
           await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
           continue;
@@ -109,10 +135,25 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         if (isGoogleMapsUrl(messageText)) {
           try {
+            // ユーザープロフィールとグループ情報を引数で渡す
+            const userProfile: Profile | null = userData ? {
+              userId: userData.userId,
+              displayName: userData.displayName,
+              pictureUrl: userData.pictureUrl,
+              statusMessage: userData.statusMessage,
+            } : null;
+
             const result = await saveGoogleMapsLink({
               mapUrl: trimGoogleMapLink(messageText) || '',
               userId,
-              groupId: groupId || ''
+              groupId: groupId || '',
+              userProfile,
+              groupData: groupInfo ? {
+                groupId: groupInfo.groupId,
+                groupName: groupInfo.groupName,
+                members: groupInfo.members,
+                pictureUrl: groupInfo.pictureUrl,
+              } : null,
             });
             console.log(`saveGoogleMapsLink result: ${JSON.stringify(result)}`);
             if (result.error) {
@@ -247,7 +288,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     }
 
-    res.status(200).send('OK');
   } else {
     res.status(405).send('Method not allowed');
   }
