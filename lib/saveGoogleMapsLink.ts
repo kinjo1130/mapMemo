@@ -3,15 +3,11 @@ import { saveMapLink } from '@/lib/saveMapLink';
 import { getCurrentUser } from './User/getCurrentUser';
 import { getJoinGroupInfo } from './Group/getJoinGroupInfo';
 import { SaveMapLinkParams } from '@/types/Link';
-import { Profile } from '@line/bot-sdk';
-import { Group } from '@/types/Group';
 
 type SaveGoogleMapsLinkParams = {
   mapUrl: string;
   userId: string;
   groupId?: string;
-  userProfile?: Profile | null;
-  groupData?: Group | null;
 };
 
 type SaveGoogleMapsLinkResult = {
@@ -23,7 +19,7 @@ type SaveGoogleMapsLinkResult = {
 export async function saveGoogleMapsLink(
   params: SaveGoogleMapsLinkParams
 ): Promise<SaveGoogleMapsLinkResult> {
-  const { mapUrl, userId, groupId, userProfile, groupData } = params;
+  const { mapUrl, userId, groupId } = params;
 
   if (!mapUrl || typeof mapUrl !== 'string') {
     return { success: false, error: 'Map URL is required and must be a string' };
@@ -37,12 +33,11 @@ export async function saveGoogleMapsLink(
     const placeDetails: PlaceDetails = await getPlaceDetails(mapUrl);
     console.log(`Place details: ${JSON.stringify(placeDetails)}`);
 
-    // 引数で渡されていない場合のみFirestoreから取得（フォールバック）
-    const currentUser = userProfile ?? await getCurrentUser(userId);
+    const currentUser = await getCurrentUser(userId);
 
-    let groupInfo = groupData ?? null;
-    if (!groupInfo && groupId) {
-      groupInfo = await getJoinGroupInfo(groupId, userId);
+    let groupData = null;
+    if (groupId) {
+      groupData = await getJoinGroupInfo(groupId, userId);
     }
 
     const saveMapLinkParams: SaveMapLinkParams = {
@@ -52,9 +47,9 @@ export async function saveGoogleMapsLink(
       placeDetails,
       displayName: currentUser?.displayName || '',
       userPictureUrl: currentUser?.pictureUrl || '',
-      groupName: groupInfo?.groupName || '',
-      members: groupInfo?.members || [],
-      groupPictureUrl: groupInfo?.pictureUrl || ''
+      groupName: groupData?.groupName || '',
+      members: groupData?.members || [],
+      groupPictureUrl: groupData?.pictureUrl || ''
     };
 
     await saveMapLink(saveMapLinkParams);
