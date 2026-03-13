@@ -30,13 +30,15 @@ export async function saveGoogleMapsLink(
   }
 
   try {
-    // placeDetails取得とユーザー/グループ情報取得を並列実行
-    const [placeDetails, currentUser, groupData] = await Promise.all([
-      getPlaceDetails(mapUrl),
-      getCurrentUser(userId),
-      groupId ? getJoinGroupInfo(groupId, userId) : Promise.resolve(null),
-    ]);
+    const placeDetails: PlaceDetails = await getPlaceDetails(mapUrl);
     console.log(`Place details: ${JSON.stringify(placeDetails)}`);
+
+    const currentUser = await getCurrentUser(userId);
+
+    let groupData = null;
+    if (groupId) {
+      groupData = await getJoinGroupInfo(groupId, userId);
+    }
 
     const saveMapLinkParams: SaveMapLinkParams = {
       userId,

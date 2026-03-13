@@ -78,25 +78,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
         console.log(`ReplyToken: ${replyToken}`);
         console.log(`Message: ${messageText}`);
-        // グループ情報取得・ユーザー存在確認・期間チェックを並列実行
-        const [groupInfo, userExists, withinPeriod] = await Promise.all([
-          groupId
-            ? getOrFetchGroupInfo(groupId, userId).catch((err) => {
-                console.error('Error getting or fetching group info:', err);
-                return null;
-              })
-            : Promise.resolve(null),
-          checkUserExists(userId),
-          isWithinUserPeriod(userId, timestamp),
-        ]);
-
-        if (groupInfo) {
-          console.log(`Group info: ${JSON.stringify(groupInfo)}`);
+        // グループメッセージの場合、グループ情報を取得または保存
+        if (groupId) {
+          try {
+            const groupInfo = await getOrFetchGroupInfo(groupId, userId);
+            console.log(`Group info: ${JSON.stringify(groupInfo)}`);
+          } catch (error) {
+            console.error('Error getting or fetching group info:', error);
+          }
         }
-
+        const userExists = await checkUserExists(userId);
         if (!userExists) {
           console.log(`User ${userId} is not registered`);
-          return;
+          return
         }
 
         // 期間設定変更のチェック
@@ -106,6 +100,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
 
         // 期間内かどうかのチェック
+        const withinPeriod = await isWithinUserPeriod(userId, timestamp);
         if (!withinPeriod) {
           await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
           continue;
@@ -256,10 +251,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   } else {
     res.status(405).send('Method not allowed');
   }
-};
-
-export const config = {
-  maxDuration: 30,
 };
 
 export default handler;
