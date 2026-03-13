@@ -23,35 +23,69 @@ export async function getPlaceDetails(mapUrl: string): Promise<PlaceDetails> {
   return await searchAndFetchPlaceDetails(placeInfo);
 }
 
+async function findPlaceId(placeInfo: PlaceInfo, apiKey: string): Promise<string> {
+  const hasTextInput = placeInfo.query || placeInfo.name;
+
+  if (hasTextInput) {
+    // テキスト入力がある場合はFind Place From Textを使用
+    const searchUrl = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json';
+    const searchParams = new URLSearchParams({
+      input: placeInfo.query || placeInfo.name || '',
+      inputtype: 'textquery',
+      fields: 'place_id',
+      key: apiKey,
+      language: 'ja',
+    });
+    if (placeInfo.coordinates) {
+      searchParams.set('locationbias', `point:${placeInfo.coordinates.lat},${placeInfo.coordinates.lng}`);
+    }
+
+    const searchResponse = await fetch(`${searchUrl}?${searchParams}`);
+    const searchData = await searchResponse.json();
+
+    if (!searchResponse.ok || searchData.status !== 'OK') {
+      console.error('Google Maps API search error:', searchData);
+      throw new Error(`Google Maps API search error: ${searchData.error_message || 'Unknown error'}`);
+    }
+    if (searchData.candidates.length === 0) {
+      throw new Error('Place not found');
+    }
+    return searchData.candidates[0].place_id;
+  }
+
+  if (placeInfo.coordinates) {
+    // 座標のみの場合はNearby Searchで最寄りの場所を取得
+    const nearbyUrl = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
+    const nearbyParams = new URLSearchParams({
+      location: `${placeInfo.coordinates.lat},${placeInfo.coordinates.lng}`,
+      rankby: 'distance',
+      key: apiKey,
+      language: 'ja',
+    });
+
+    const nearbyResponse = await fetch(`${nearbyUrl}?${nearbyParams}`);
+    const nearbyData = await nearbyResponse.json();
+
+    if (!nearbyResponse.ok || nearbyData.status !== 'OK') {
+      console.error('Google Maps API nearby search error:', nearbyData);
+      throw new Error(`Google Maps API nearby search error: ${nearbyData.error_message || 'Unknown error'}`);
+    }
+    if (nearbyData.results.length === 0) {
+      throw new Error('Place not found');
+    }
+    return nearbyData.results[0].place_id;
+  }
+
+  throw new Error('No search input or coordinates available');
+}
+
 async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDetails> {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     throw new Error('Google Maps API key is not set');
   }
 
-  // First, search for the place
-  const searchUrl = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json';
-  const searchParams = new URLSearchParams({
-    input: placeInfo.query || placeInfo.name || `${placeInfo.coordinates?.lat},${placeInfo.coordinates?.lng}`,
-    inputtype: 'textquery',
-    fields: 'place_id',
-    key: apiKey,
-    language: 'ja',  // 日本語の結果を要求
-  });
-
-  const searchResponse = await fetch(`${searchUrl}?${searchParams}`);
-  const searchData = await searchResponse.json();
-
-  if (!searchResponse.ok || searchData.status !== 'OK') {
-    console.error('Google Maps API search error:', searchData);
-    throw new Error(`Google Maps API search error: ${searchData.error_message || 'Unknown error'}`);
-  }
-
-  if (searchData.candidates.length === 0) {
-    throw new Error('Place not found');
-  }
-
-  const placeId = searchData.candidates[0].place_id;
+  const placeId = await findPlaceId(placeInfo, apiKey);
 
   // Now fetch the place details
   const detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json';
