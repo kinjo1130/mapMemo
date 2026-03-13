@@ -1,6 +1,7 @@
 import { collection, addDoc, serverTimestamp, updateDoc, doc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db } from './init/firebase';
 import { SaveMapLinkParams } from '@/types/Link';
+import { generateTagsFromTypes } from './placeTypeLabels';
 
 export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
   try {
@@ -32,7 +33,19 @@ export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
       userPictureUrl,
       groupName,
       members,
-      groupPictureUrl
+      groupPictureUrl,
+      categories: placeDetails.categories || [],
+      tags: generateTagsFromTypes(placeDetails.categories || []),
+      placeId: placeDetails.placeId || '',
+      rating: placeDetails.rating ?? null,
+      userRatingsTotal: placeDetails.userRatingsTotal ?? null,
+      priceLevel: placeDetails.priceLevel ?? null,
+      openingHours: placeDetails.openingHours ?? null,
+      website: placeDetails.website ?? null,
+      phoneNumber: placeDetails.phoneNumber ?? null,
+      googleMapsUrl: placeDetails.googleMapsUrl ?? null,
+      businessStatus: placeDetails.businessStatus ?? null,
+      editorialSummary: placeDetails.editorialSummary ?? null,
     };
 
     // Firestoreに保存

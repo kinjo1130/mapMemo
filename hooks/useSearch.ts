@@ -4,7 +4,7 @@ import { useLinks } from '@/hooks/useLinks';
 const LINKS_PER_PAGE = 1000;
 
 export function useSearch(userId: string) {
-  const { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup } =
+  const { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup, handleTagsUpdated } =
     useLinks(LINKS_PER_PAGE);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -22,7 +22,9 @@ export function useSearch(userId: string) {
             (link.name && link.name.toLowerCase().includes(term)) ||
             (link.address && link.address.toLowerCase().includes(term)) ||
             (link.groupName && link.groupName.toLowerCase().includes(term)) ||
-            (link.displayName && link.displayName.toLowerCase().includes(term))
+            (link.displayName && link.displayName.toLowerCase().includes(term)) ||
+            (link.categories && link.categories.some(cat => cat.toLowerCase().includes(term))) ||
+            (link.tags && link.tags.some(tag => tag.toLowerCase().includes(term)))
           );
         })
       : links;
@@ -107,6 +109,7 @@ export function useSearch(userId: string) {
     handleDelete,
     loadLinks,
     clearSearchTerm,
-    searchLinksByGroup
+    searchLinksByGroup,
+    handleTagsUpdated
   };
 }

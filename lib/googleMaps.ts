@@ -7,6 +7,17 @@ export interface PlaceDetails {
   photoUrl: string | null;
   latitude: number;
   longitude: number;
+  categories: string[];
+  placeId: string;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  priceLevel: number | null;
+  openingHours: string[] | null;
+  website: string | null;
+  phoneNumber: string | null;
+  googleMapsUrl: string | null;
+  businessStatus: string | null;
+  editorialSummary: string | null;
 }
 
 export async function getPlaceDetails(mapUrl: string): Promise<PlaceDetails> {
@@ -91,7 +102,7 @@ async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDe
   const detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json';
   const detailsParams = new URLSearchParams({
     place_id: placeId,
-    fields: 'name,formatted_address,rating,photo,geometry',  // Added 'geometry' field
+    fields: 'place_id,name,formatted_address,rating,user_ratings_total,price_level,opening_hours,website,formatted_phone_number,url,business_status,editorial_summary,photo,geometry,type',
     key: apiKey,
     language: 'ja',  // 日本語の結果を要求
   });
@@ -128,5 +139,16 @@ async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDe
     photoUrl: photoUrl,
     latitude: result.geometry.location.lat || placeInfo.coordinates?.lat || 0,
     longitude: result.geometry.location.lng || placeInfo.coordinates?.lng || 0,
+    categories: result.types || [],
+    placeId: placeId,
+    rating: result.rating ?? null,
+    userRatingsTotal: result.user_ratings_total ?? null,
+    priceLevel: result.price_level ?? null,
+    openingHours: result.opening_hours?.weekday_text ?? null,
+    website: result.website ?? null,
+    phoneNumber: result.formatted_phone_number ?? null,
+    googleMapsUrl: result.url ?? null,
+    businessStatus: result.business_status ?? null,
+    editorialSummary: result.editorial_summary?.overview ?? null,
   };
 }

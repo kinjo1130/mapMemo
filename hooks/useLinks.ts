@@ -40,7 +40,10 @@ export const useLinks = (linksPerPage: number) => {
 
       const querySnapshot = await getDocs(q);
       const newLinks = querySnapshot.docs.map(
-        (doc) => ({ ...doc.data(), docId: doc.id } as Link)
+        (doc) => {
+          const data = doc.data();
+          return { ...data, docId: doc.id, categories: data.categories || [], tags: data.tags || [] } as Link;
+        }
       );
 
       setLinks((prevLinks) => {
@@ -134,7 +137,8 @@ export const useLinks = (linksPerPage: number) => {
       const querySnapshot = await getDocs(baseQuery);
       const allLinks: Link[] = [];
       querySnapshot.forEach((doc) => {
-        allLinks.push({ ...doc.data(), docId: doc.id } as Link);
+        const data = doc.data();
+        allLinks.push({ ...data, docId: doc.id, categories: data.categories || [], tags: data.tags || [] } as Link);
       });
 
       const filteredLinks = allLinks.filter(link => {
@@ -151,6 +155,12 @@ export const useLinks = (linksPerPage: number) => {
     }
   }, [linksPerPage]);
 
-  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup };
+  const handleTagsUpdated = useCallback((docId: string, tags: string[]) => {
+    setLinks((prevLinks) =>
+      prevLinks.map((link) => link.docId === docId ? { ...link, tags } : link)
+    );
+  }, []);
+
+  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup, handleTagsUpdated };
 
 };

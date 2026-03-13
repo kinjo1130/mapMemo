@@ -15,7 +15,18 @@ export interface Link {
   displayName: string;
   groupName: string;
   groupPictureUrl: string;
-
+  categories: string[];
+  tags: string[];
+  placeId?: string;
+  rating?: number | null;
+  userRatingsTotal?: number | null;
+  priceLevel?: number | null;
+  openingHours?: string[] | null;
+  website?: string | null;
+  phoneNumber?: string | null;
+  googleMapsUrl?: string | null;
+  businessStatus?: string | null;
+  editorialSummary?: string | null;
 }
 export interface PlaceDetails {
   name: string;
@@ -23,6 +34,17 @@ export interface PlaceDetails {
   photoUrl: string | null;
   latitude: number | null;
   longitude: number | null;
+  categories: string[];
+  placeId: string;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  priceLevel: number | null;
+  openingHours: string[] | null;
+  website: string | null;
+  phoneNumber: string | null;
+  googleMapsUrl: string | null;
+  businessStatus: string | null;
+  editorialSummary: string | null;
 }
 export interface SaveMapLinkParams {
   userId: string;

@@ -44,7 +44,8 @@ export default function Home() {
     handleDelete,
     loadLinks,
     clearSearchTerm,
-    searchLinksByGroup
+    searchLinksByGroup,
+    handleTagsUpdated
   } = useSearch(profile?.userId ?? "");
 
   const {
@@ -268,7 +269,7 @@ export default function Home() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="名前, 住所, 地点名, グループ名で検索"
+                placeholder="名前, 住所, グループ名, タグで検索"
                 className="w-full py-2 px-3 pr-20 border rounded text-base"
               />
               {inputValue && (
@@ -312,6 +313,7 @@ export default function Home() {
                 userId={profile?.userId ?? ""}
                 onFilterByUser={handleFilterByUser}
                 onFilterByGroup={handleFilterByGroup}
+                onTagsUpdated={handleTagsUpdated}
               />
             </div>
           )}
