@@ -12,15 +12,32 @@ export async function expandShortUrl(url: string): Promise<string> {
     return url;
   }
   try {
-    const response = await fetch(url, {
-      method: 'HEAD',
-      redirect: 'follow'
-    });
-    return response.url;
+    const response = await fetch(url, { redirect: 'follow' });
+    const expandedUrl = response.url;
+
+    // ftid URLの場合、HTMLから座標を抽出してplace URL形式に変換
+    if (expandedUrl.includes('ftid=')) {
+      const html = await response.text();
+      const coords = extractCoordsFromHtml(html);
+      if (coords) {
+        return `https://www.google.com/maps/@${coords.lat},${coords.lng},17z`;
+      }
+    }
+    return expandedUrl;
   } catch (error) {
     console.error('Error expanding URL:', error);
     return url;
   }
+}
+
+export function extractCoordsFromHtml(html: string): { lat: string; lng: string } | null {
+  // og:title内のstatic map URLから座標を取得
+  // パターン: center=35.50924045%2C139.7698121
+  const match = html.match(/center=(-?[\d.]+)%2C(-?[\d.]+)/);
+  if (match) {
+    return { lat: match[1], lng: match[2] };
+  }
+  return null;
 }
 
 export function extractPlaceInfo(url: string): PlaceInfo | null {
