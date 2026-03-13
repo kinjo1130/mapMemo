@@ -10,9 +10,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.41",
     "@googlemaps/google-maps-services-js": "^3.4.0",
     "@line/bot-sdk": "^9.2.2",
     "@line/liff": "^2.23.2",
+    "ai": "^6.0.116",
     "classnames": "^2.5.1",
     "core-js": "^3.37.1",
     "firebase": "^10.12.2",
@@ -23,7 +25,8 @@
     "node-fetch": "^3.3.2",
     "react": "^18",
     "react-dom": "^18",
-    "react-map-gl": "^7.1.7"
+    "react-map-gl": "^7.1.7",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",
