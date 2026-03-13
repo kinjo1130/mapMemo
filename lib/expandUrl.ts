@@ -5,7 +5,6 @@ export interface PlaceInfo {
     lat: number;
     lng: number;
   };
-  ftid?: string;
 }
 
 export async function expandShortUrl(url: string): Promise<string> {
@@ -13,13 +12,9 @@ export async function expandShortUrl(url: string): Promise<string> {
     return url;
   }
   try {
-    // GETリクエスト + User-Agentでブラウザと同じリダイレクトチェーンを取得
     const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MapMemoBot/1.0)',
-      },
+      method: 'HEAD',
+      redirect: 'follow'
     });
     return response.url;
   } catch (error) {
@@ -62,12 +57,6 @@ export function extractPlaceInfo(url: string): PlaceInfo | null {
 
     if (name || query || coordinates) {
       return { name, query, coordinates };
-    }
-
-    // ftidパラメータからplace情報を抽出（短縮URLがftid形式にリダイレクトされた場合）
-    const ftid = parsedUrl.searchParams.get('ftid');
-    if (ftid) {
-      return { ftid };
     }
 
     return null;
