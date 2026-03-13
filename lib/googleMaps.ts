@@ -13,14 +13,54 @@ export async function getPlaceDetails(mapUrl: string): Promise<PlaceDetails> {
   console.log(`Processing URL: ${mapUrl}`);
   const expandedUrl = await expandShortUrl(mapUrl);
   console.log(`Expanded URL: ${expandedUrl}`);
-  const placeInfo = extractPlaceInfo(expandedUrl);
+  let placeInfo = extractPlaceInfo(expandedUrl);
   console.log(`Extracted place info: ${JSON.stringify(placeInfo)}`);
 
-  if (!placeInfo) {
+  // ftid形式の場合、CIDリダイレクトで場所情報を解決
+  if (placeInfo?.ftid && !placeInfo.name && !placeInfo.query && !placeInfo.coordinates) {
+    const resolved = await resolveFtid(placeInfo.ftid);
+    if (resolved) {
+      placeInfo = resolved;
+      console.log(`Resolved ftid place info: ${JSON.stringify(placeInfo)}`);
+    }
+  }
+
+  if (!placeInfo || (!placeInfo.name && !placeInfo.query && !placeInfo.coordinates)) {
     throw new Error('Invalid Google Maps URL');
   }
 
   return await searchAndFetchPlaceDetails(placeInfo);
+}
+
+async function resolveFtid(ftid: string): Promise<PlaceInfo | null> {
+  try {
+    // ftidからCID（2番目のhex部分）を抽出してdecimalに変換
+    const cidHex = ftid.split(':')[1];
+    if (!cidHex) return null;
+    const cidDecimal = BigInt(cidHex).toString();
+
+    // CIDでGoogle Mapsにリクエストし、リダイレクト先URLからplace情報を取得
+    const response = await fetch(`https://maps.google.com/maps?cid=${cidDecimal}`, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; MapMemoBot/1.0)',
+      },
+    });
+
+    const resolvedUrl = response.url;
+    console.log(`Resolved ftid via CID: ${resolvedUrl}`);
+
+    const resolved = extractPlaceInfo(resolvedUrl);
+    if (resolved && (resolved.name || resolved.query || resolved.coordinates)) {
+      return resolved;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error resolving ftid:', error);
+    return null;
+  }
 }
 
 async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDetails> {
