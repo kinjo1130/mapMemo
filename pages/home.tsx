@@ -171,16 +171,10 @@ export default function Home() {
     }
   };
 
-  // ユーザー名でフィルタリングする関数
-  const handleFilterByUser = useCallback((userName: string) => {
-    setInputValue(userName);
-    handleSearchInputChange(userName);
-  }, [handleSearchInputChange]);
-
-  // グループ名でフィルタリングする関数
-  const handleFilterByGroup = useCallback((groupName: string) => {
-    setInputValue(groupName);
-    handleSearchInputChange(groupName);
+  // テキストでフィルタリングする関数（ユーザー名・グループ名共通）
+  const handleFilterByText = useCallback((text: string) => {
+    setInputValue(text);
+    handleSearchInputChange(text);
   }, [handleSearchInputChange]);
 
   // タブごとの動的なタイトル設定
@@ -320,8 +314,8 @@ export default function Home() {
                 hasMore={hasMore && !searchTerm}
                 isLoading={isLoading || isSearching}
                 userId={profile?.userId ?? ""}
-                onFilterByUser={handleFilterByUser}
-                onFilterByGroup={handleFilterByGroup}
+                onFilterByUser={handleFilterByText}
+                onFilterByGroup={handleFilterByText}
                 onTagsUpdated={handleTagsUpdated}
               />
             </div>

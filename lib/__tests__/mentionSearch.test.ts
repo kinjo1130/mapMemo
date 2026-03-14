@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
 import type { Link } from '@/types/Link';
-import { matchesKeywords } from '../ai/tools';
+import { scoreByKeywords } from '@/lib/search';
 
 function createLink(overrides: Partial<Link> = {}): Link {
   return {
@@ -25,43 +25,43 @@ function createLink(overrides: Partial<Link> = {}): Link {
   };
 }
 
-describe('matchesKeywords', () => {
+describe('scoreByKeywords', () => {
   it('キーワードが空の場合はマッチする', () => {
-    const result = matchesKeywords(createLink(), []);
+    const result = scoreByKeywords(createLink(), []);
     expect(result).toEqual({ matches: true, score: 1 });
   });
 
   it('全キーワードがマッチすればスコア1.0', () => {
     const link = createLink({ name: '大分駅前カフェ', address: '大分県大分市' });
-    const result = matchesKeywords(link, ['大分', 'カフェ']);
+    const result = scoreByKeywords(link, ['大分', 'カフェ']);
     expect(result.matches).toBe(true);
     expect(result.score).toBe(1);
   });
 
   it('一部のキーワードのみマッチでもmatchesはtrue', () => {
     const link = createLink({ name: '大分駅前レストラン', address: '大分県大分市' });
-    const result = matchesKeywords(link, ['大分', '店']);
+    const result = scoreByKeywords(link, ['大分', '店']);
     expect(result.matches).toBe(true);
     expect(result.score).toBe(0.5);
   });
 
   it('キーワードが一つもマッチしない場合はmatchesがfalse', () => {
     const link = createLink({ name: '東京タワー', address: '東京都港区' });
-    const result = matchesKeywords(link, ['大分', '店']);
+    const result = scoreByKeywords(link, ['大分', '店']);
     expect(result.matches).toBe(false);
     expect(result.score).toBe(0);
   });
 
   it('カテゴリでマッチする', () => {
     const link = createLink({ name: 'テスト店舗', categories: ['restaurant'] });
-    const result = matchesKeywords(link, ['restaurant']);
+    const result = scoreByKeywords(link, ['restaurant']);
     expect(result.matches).toBe(true);
     expect(result.score).toBe(1);
   });
 
   it('タグでマッチする', () => {
     const link = createLink({ name: 'テスト店舗', tags: ['ランチ'] });
-    const result = matchesKeywords(link, ['ランチ']);
+    const result = scoreByKeywords(link, ['ランチ']);
     expect(result.matches).toBe(true);
     expect(result.score).toBe(1);
   });
@@ -74,7 +74,7 @@ describe('matchesKeywords', () => {
     ];
 
     const scored = links
-      .map((link) => ({ link, ...matchesKeywords(link, ['大分', 'カフェ']) }))
+      .map((link) => ({ link, ...scoreByKeywords(link, ['大分', 'カフェ']) }))
       .filter((item) => item.matches)
       .sort((a, b) => b.score - a.score);
 

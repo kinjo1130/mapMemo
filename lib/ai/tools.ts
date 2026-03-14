@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../init/firebase';
 import { Link } from '@/types/Link';
+import { scoreByKeywords } from '@/lib/search';
 
 type SearchContext = {
   userId: string;
@@ -50,27 +51,6 @@ async function fetchUserLinks(ctx: SearchContext): Promise<Link[]> {
   return Array.from(linkMap.values());
 }
 
-export function matchesKeywords(link: Link, keywords: string[]): { matches: boolean; score: number } {
-  if (keywords.length === 0) return { matches: true, score: 1 };
-
-  let matchCount = 0;
-  for (const term of keywords) {
-    const lower = term.toLowerCase();
-    const hit =
-      (link.name && link.name.toLowerCase().includes(lower)) ||
-      (link.address && link.address.toLowerCase().includes(lower)) ||
-      (link.groupName && link.groupName.toLowerCase().includes(lower)) ||
-      (link.displayName && link.displayName.toLowerCase().includes(lower)) ||
-      (link.categories &&
-        link.categories.some((cat) => cat.toLowerCase().includes(lower))) ||
-      (link.tags &&
-        link.tags.some((tag) => tag.toLowerCase().includes(lower)));
-    if (hit) matchCount++;
-  }
-
-  return { matches: matchCount > 0, score: matchCount / keywords.length };
-}
-
 function haversineDistance(
   lat1: number,
   lng1: number,
@@ -108,7 +88,7 @@ export function createSearchTools(ctx: SearchContext) {
         try {
           const allLinks = await fetchUserLinks(ctx);
           let scored = allLinks
-            .map((link) => ({ link, ...matchesKeywords(link, keywords) }))
+            .map((link) => ({ link, ...scoreByKeywords(link, keywords) }))
             .filter((item) => item.matches)
             .sort((a, b) => b.score - a.score);
 

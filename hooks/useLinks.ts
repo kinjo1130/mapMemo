@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { collection, query, where, getDocs, deleteDoc, doc, limit, startAfter, getDoc, or, orderBy, OrderByDirection } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, limit, or, orderBy, OrderByDirection } from "firebase/firestore";
 import { db } from "../lib/init/firebase";
 import { Link } from "@/types/Link";
 
@@ -79,46 +79,6 @@ export const useLinks = (linksPerPage: number) => {
     }
   }, []);
 
-  // const searchLinks = useCallback(async (userId: string, searchTerm: string) => {
-  //   setIsLoading(true);
-  //   console.log('searchLinks');
-  //   try {
-  //     const linksRef = collection(db, 'Links');
-  //     const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
-  //     const baseQuery = query(
-  //       linksRef,
-  //       or(
-  //         where("members", "array-contains", userId),
-  //         where("userId", "==", userId)
-  //       ),
-  //       limit(100)  // 検索のベースとなる最大件数
-  //     );
-
-  //     const querySnapshot = await getDocs(baseQuery);
-  //     const allLinks: Link[] = [];
-  //     querySnapshot.forEach((doc) => {
-  //       allLinks.push({ ...doc.data(), docId: doc.id } as Link);
-  //     });
-
-  //     const filteredLinks = allLinks.filter(link => {
-  //       const nameMatches = searchTerms.every(term =>
-  //         link.name.toLowerCase().includes(term)
-  //       );
-  //       const addressMatches = searchTerms.every(term =>
-  //         link.address.toLowerCase().includes(term)
-  //       );
-  //       return nameMatches || addressMatches;
-  //     });
-
-  //     setLinks(filteredLinks.slice(0, linksPerPage));
-  //     setHasMore(filteredLinks.length > linksPerPage);
-  //     setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
-  //   } catch (error) {
-  //     console.error('Error searching links:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }, [linksPerPage]);
   // 自分が所属しているグループごとにフィリタリングできるようにする
   const searchLinksByGroup = useCallback(async (userId: string, groupId: string) => {
     setIsLoading(true);
