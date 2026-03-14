@@ -13,6 +13,7 @@ export async function handleMentionSearch(
   const { steps } = await generateText({
     model: openai('gpt-4o-mini'),
     tools,
+    toolChoice: 'required',
     stopWhen: stepCountIs(5),
     system: `あなたはMapMemoアシスタントです。ユーザーが保存した地点（お気に入りの場所）を検索して最適な結果を返します。
 
@@ -36,6 +37,18 @@ export async function handleMentionSearch(
     prompt: searchQuery,
   });
 
+  // デバッグログ: 各ステップのtool呼び出し状況
+  for (const step of steps) {
+    console.log(
+      `[handleMentionSearch] Step: toolCalls=${step.toolCalls.length}, toolResults=${step.toolResults.length}`
+    );
+    for (const tr of step.toolResults) {
+      console.log(
+        `  Tool: ${tr.toolName}, output: ${JSON.stringify(tr.output).slice(0, 200)}`
+      );
+    }
+  }
+
   // ツール結果からLinkデータを直接収集
   const linkMap = new Map<string, Link>();
   for (const step of steps) {
@@ -55,6 +68,8 @@ export async function handleMentionSearch(
       }
     }
   }
+
+  console.log(`[handleMentionSearch] collected ${linkMap.size} unique links`);
 
   return Array.from(linkMap.values()).slice(0, 10);
 }

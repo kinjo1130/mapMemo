@@ -101,6 +101,9 @@ export function createSearchTools(ctx: SearchContext) {
           }
 
           const results = scored.slice(0, 20);
+          console.log(
+            `[searchByKeyword] keywords=${JSON.stringify(keywords)}, allLinks=${allLinks.length}, matched=${scored.length}, returning=${results.length}`
+          );
           return results.map(({ link }) => ({
             docId: link.docId,
             name: link.name,
@@ -126,27 +129,22 @@ export function createSearchTools(ctx: SearchContext) {
       inputSchema: z.object({
         lat: z.number().describe('緯度'),
         lng: z.number().describe('経度'),
-        radiusKm: z
-          .number()
-          .optional()
-          .default(3)
-          .describe('検索半径（km）。デフォルトは3km。'),
       }),
-      execute: async ({ lat, lng, radiusKm }) => {
+      execute: async ({ lat, lng }) => {
         try {
           const allLinks = await fetchUserLinks(ctx);
-          const radius = radiusKm ?? 3;
-
           const withDistance = allLinks
             .filter((link) => link.lat != null && link.lng != null)
             .map((link) => ({
               link,
               distance: haversineDistance(lat, lng, link.lat!, link.lng!),
             }))
-            .filter((item) => item.distance <= radius)
             .sort((a, b) => a.distance - b.distance);
 
           const results = withDistance.slice(0, 20);
+          console.log(
+            `[searchByLocation] lat=${lat}, lng=${lng}, allLinks=${allLinks.length}, returning=${results.length}`
+          );
           return results.map(({ link, distance }) => ({
             docId: link.docId,
             name: link.name,
@@ -195,6 +193,9 @@ export function createSearchTools(ctx: SearchContext) {
           }
 
           const location = data.results[0].geometry.location;
+          console.log(
+            `[geocode] placeName="${placeName}" → lat=${location.lat}, lng=${location.lng}`
+          );
           return {
             lat: location.lat,
             lng: location.lng,
