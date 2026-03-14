@@ -149,14 +149,17 @@ export function createSearchTools(ctx: SearchContext) {
         try {
           const radius = radiusKm ?? 50;
           const allLinks = await getLinks();
-          const withDistance = allLinks
+          const sorted = allLinks
             .filter((link) => link.lat != null && link.lng != null)
             .map((link) => ({
               link,
               distance: haversineDistance(lat, lng, link.lat!, link.lng!),
             }))
-            .filter((item) => item.distance <= radius)
             .sort((a, b) => a.distance - b.distance);
+
+          // 半径内の結果を優先。なければ最寄りの結果をフォールバック
+          const withinRadius = sorted.filter((item) => item.distance <= radius);
+          const withDistance = withinRadius.length > 0 ? withinRadius : sorted;
 
           const results = withDistance.slice(0, 20);
           console.log(
