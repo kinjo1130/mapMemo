@@ -168,7 +168,7 @@ export function buildSearchResultMessage(
               height: 'sm',
               action: {
                 type: 'uri',
-                label: '保存した地点一覧を見る',
+                label: 'さらに探してみる',
                 uri: 'https://liff.line.me/2005710452-e6m8Ao66',
               },
               color: '#1DB446',

@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { collection, query, where, getDocs, or } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../init/firebase';
 import { Link } from '@/types/Link';
 
@@ -9,24 +9,7 @@ type SearchContext = {
   groupId?: string;
 };
 
-async function fetchUserLinks(ctx: SearchContext): Promise<Link[]> {
-  const linksRef = collection(db, 'Links');
-
-  const q = ctx.groupId
-    ? query(
-        linksRef,
-        where('members', 'array-contains', ctx.userId),
-        where('groupId', '==', ctx.groupId)
-      )
-    : query(
-        linksRef,
-        or(
-          where('members', 'array-contains', ctx.userId),
-          where('userId', '==', ctx.userId)
-        )
-      );
-
-  const snapshot = await getDocs(q);
+function docsToLinks(snapshot: { docs: { id: string; data: () => Record<string, unknown> }[] }): Link[] {
   return snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
@@ -38,11 +21,42 @@ async function fetchUserLinks(ctx: SearchContext): Promise<Link[]> {
   });
 }
 
-function matchesKeywords(link: Link, keywords: string[]): boolean {
-  if (keywords.length === 0) return true;
-  return keywords.every((term) => {
+async function fetchUserLinks(ctx: SearchContext): Promise<Link[]> {
+  const linksRef = collection(db, 'Links');
+
+  if (ctx.groupId) {
+    const q = query(
+      linksRef,
+      where('members', 'array-contains', ctx.userId),
+      where('groupId', '==', ctx.groupId)
+    );
+    const snapshot = await getDocs(q);
+    return docsToLinks(snapshot);
+  }
+
+  // or() を使わず2つのクエリを並行実行してマージ（インデックス不要）
+  const [memberSnapshot, userSnapshot] = await Promise.all([
+    getDocs(query(linksRef, where('members', 'array-contains', ctx.userId))),
+    getDocs(query(linksRef, where('userId', '==', ctx.userId))),
+  ]);
+
+  const linkMap = new Map<string, Link>();
+  for (const link of docsToLinks(memberSnapshot)) {
+    linkMap.set(link.docId, link);
+  }
+  for (const link of docsToLinks(userSnapshot)) {
+    linkMap.set(link.docId, link);
+  }
+  return Array.from(linkMap.values());
+}
+
+export function matchesKeywords(link: Link, keywords: string[]): { matches: boolean; score: number } {
+  if (keywords.length === 0) return { matches: true, score: 1 };
+
+  let matchCount = 0;
+  for (const term of keywords) {
     const lower = term.toLowerCase();
-    return (
+    const hit =
       (link.name && link.name.toLowerCase().includes(lower)) ||
       (link.address && link.address.toLowerCase().includes(lower)) ||
       (link.groupName && link.groupName.toLowerCase().includes(lower)) ||
@@ -50,9 +64,11 @@ function matchesKeywords(link: Link, keywords: string[]): boolean {
       (link.categories &&
         link.categories.some((cat) => cat.toLowerCase().includes(lower))) ||
       (link.tags &&
-        link.tags.some((tag) => tag.toLowerCase().includes(lower)))
-    );
-  });
+        link.tags.some((tag) => tag.toLowerCase().includes(lower)));
+    if (hit) matchCount++;
+  }
+
+  return { matches: matchCount > 0, score: matchCount / keywords.length };
 }
 
 function haversineDistance(
@@ -89,30 +105,38 @@ export function createSearchTools(ctx: SearchContext) {
           .describe('フィルタするカテゴリ（例: restaurant, cafe）'),
       }),
       execute: async ({ keywords, categories }) => {
-        const allLinks = await fetchUserLinks(ctx);
-        let filtered = allLinks.filter((link) => matchesKeywords(link, keywords));
+        try {
+          const allLinks = await fetchUserLinks(ctx);
+          let scored = allLinks
+            .map((link) => ({ link, ...matchesKeywords(link, keywords) }))
+            .filter((item) => item.matches)
+            .sort((a, b) => b.score - a.score);
 
-        if (categories && categories.length > 0) {
-          filtered = filtered.filter((link) =>
-            link.categories?.some((cat) =>
-              categories.some((c) => cat.toLowerCase().includes(c.toLowerCase()))
-            )
-          );
+          if (categories && categories.length > 0) {
+            scored = scored.filter((item) =>
+              item.link.categories?.some((cat) =>
+                categories.some((c) => cat.toLowerCase().includes(c.toLowerCase()))
+              )
+            );
+          }
+
+          const results = scored.slice(0, 20);
+          return results.map(({ link }) => ({
+            docId: link.docId,
+            name: link.name,
+            address: link.address,
+            lat: link.lat,
+            lng: link.lng,
+            rating: link.rating ?? null,
+            categories: link.categories,
+            tags: link.tags,
+            googleMapsUrl: link.googleMapsUrl || link.link,
+            photoUrl: link.photoUrl,
+          }));
+        } catch (error) {
+          console.error('searchByKeyword error:', error);
+          return { error: `検索中にエラーが発生しました: ${error}` };
         }
-
-        const results = filtered.slice(0, 20);
-        return results.map((link) => ({
-          docId: link.docId,
-          name: link.name,
-          address: link.address,
-          lat: link.lat,
-          lng: link.lng,
-          rating: link.rating ?? null,
-          categories: link.categories,
-          tags: link.tags,
-          googleMapsUrl: link.googleMapsUrl || link.link,
-          photoUrl: link.photoUrl,
-        }));
       },
     }),
 
@@ -129,32 +153,37 @@ export function createSearchTools(ctx: SearchContext) {
           .describe('検索半径（km）。デフォルトは3km。'),
       }),
       execute: async ({ lat, lng, radiusKm }) => {
-        const allLinks = await fetchUserLinks(ctx);
-        const radius = radiusKm ?? 3;
+        try {
+          const allLinks = await fetchUserLinks(ctx);
+          const radius = radiusKm ?? 3;
 
-        const withDistance = allLinks
-          .filter((link) => link.lat != null && link.lng != null)
-          .map((link) => ({
-            link,
-            distance: haversineDistance(lat, lng, link.lat!, link.lng!),
-          }))
-          .filter((item) => item.distance <= radius)
-          .sort((a, b) => a.distance - b.distance);
+          const withDistance = allLinks
+            .filter((link) => link.lat != null && link.lng != null)
+            .map((link) => ({
+              link,
+              distance: haversineDistance(lat, lng, link.lat!, link.lng!),
+            }))
+            .filter((item) => item.distance <= radius)
+            .sort((a, b) => a.distance - b.distance);
 
-        const results = withDistance.slice(0, 20);
-        return results.map(({ link, distance }) => ({
-          docId: link.docId,
-          name: link.name,
-          address: link.address,
-          lat: link.lat,
-          lng: link.lng,
-          distanceKm: Math.round(distance * 100) / 100,
-          rating: link.rating ?? null,
-          categories: link.categories,
-          tags: link.tags,
-          googleMapsUrl: link.googleMapsUrl || link.link,
-          photoUrl: link.photoUrl,
-        }));
+          const results = withDistance.slice(0, 20);
+          return results.map(({ link, distance }) => ({
+            docId: link.docId,
+            name: link.name,
+            address: link.address,
+            lat: link.lat,
+            lng: link.lng,
+            distanceKm: Math.round(distance * 100) / 100,
+            rating: link.rating ?? null,
+            categories: link.categories,
+            tags: link.tags,
+            googleMapsUrl: link.googleMapsUrl || link.link,
+            photoUrl: link.photoUrl,
+          }));
+        } catch (error) {
+          console.error('searchByLocation error:', error);
+          return { error: `位置検索中にエラーが発生しました: ${error}` };
+        }
       },
     }),
 
@@ -165,31 +194,36 @@ export function createSearchTools(ctx: SearchContext) {
         placeName: z.string().describe('座標に変換する地名（例: 渋谷、東京駅、新宿）'),
       }),
       execute: async ({ placeName }) => {
-        const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-        if (!apiKey) {
-          throw new Error('Google Maps API key is not set');
+        try {
+          const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+          if (!apiKey) {
+            return { error: 'Google Maps API key is not set' };
+          }
+
+          const url = 'https://maps.googleapis.com/maps/api/geocode/json';
+          const params = new URLSearchParams({
+            address: placeName,
+            key: apiKey,
+            language: 'ja',
+          });
+
+          const response = await fetch(`${url}?${params}`);
+          const data = await response.json();
+
+          if (data.status !== 'OK' || !data.results?.length) {
+            return { error: `「${placeName}」の座標を取得できませんでした。` };
+          }
+
+          const location = data.results[0].geometry.location;
+          return {
+            lat: location.lat,
+            lng: location.lng,
+            formattedAddress: data.results[0].formatted_address,
+          };
+        } catch (error) {
+          console.error('geocode error:', error);
+          return { error: `ジオコード中にエラーが発生しました: ${error}` };
         }
-
-        const url = 'https://maps.googleapis.com/maps/api/geocode/json';
-        const params = new URLSearchParams({
-          address: placeName,
-          key: apiKey,
-          language: 'ja',
-        });
-
-        const response = await fetch(`${url}?${params}`);
-        const data = await response.json();
-
-        if (data.status !== 'OK' || !data.results?.length) {
-          return { error: `「${placeName}」の座標を取得できませんでした。` };
-        }
-
-        const location = data.results[0].geometry.location;
-        return {
-          lat: location.lat,
-          lng: location.lng,
-          formattedAddress: data.results[0].formatted_address,
-        };
       },
     }),
   };
