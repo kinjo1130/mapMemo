@@ -71,6 +71,15 @@ function haversineDistance(
 }
 
 export function createSearchTools(ctx: SearchContext) {
+  // Firestoreクエリを1回だけ実行してキャッシュ
+  let cachedLinks: Link[] | null = null;
+  async function getLinks(): Promise<Link[]> {
+    if (!cachedLinks) {
+      cachedLinks = await fetchUserLinks(ctx);
+    }
+    return cachedLinks;
+  }
+
   return {
     searchByKeyword: tool({
       description:
@@ -86,7 +95,7 @@ export function createSearchTools(ctx: SearchContext) {
       }),
       execute: async ({ keywords, categories }) => {
         try {
-          const allLinks = await fetchUserLinks(ctx);
+          const allLinks = await getLinks();
           let scored = allLinks
             .map((link) => ({ link, ...scoreByKeywords(link, keywords) }))
             .filter((item) => item.matches)
@@ -132,7 +141,7 @@ export function createSearchTools(ctx: SearchContext) {
       }),
       execute: async ({ lat, lng }) => {
         try {
-          const allLinks = await fetchUserLinks(ctx);
+          const allLinks = await getLinks();
           const withDistance = allLinks
             .filter((link) => link.lat != null && link.lng != null)
             .map((link) => ({

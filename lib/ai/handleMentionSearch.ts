@@ -14,16 +14,16 @@ export async function handleMentionSearch(
     model: openai('gpt-4o-mini'),
     tools,
     toolChoice: 'required',
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(3),
     system: `あなたはMapMemoアシスタントです。ユーザーが保存した地点（お気に入りの場所）を検索して最適な結果を返します。
 
 利用可能なツール:
 - searchByKeyword: キーワードで保存済み地点を検索
-- searchByLocation: 座標と半径で近くの保存済み地点を検索
+- searchByLocation: 座標で保存済み地点を距離順に検索
 - geocode: 地名を座標に変換
 
 検索戦略:
-1. 地名を含むクエリ（例: 「大分の店」「渋谷のカフェ」）: まずgeocodeで地名の座標を取得し、searchByLocationで近くの地点を検索。radiusKmは広め（50km）に設定。
+1. 地名を含むクエリ（例: 「大分の店」「渋谷のカフェ」）: まずgeocodeで地名の座標を取得し、searchByLocationで近くの地点を検索。
 2. 「カフェ」「ラーメン」などのキーワードのみの場合: searchByKeywordで検索
 3. 位置+キーワードの場合: geocode → searchByLocation で位置検索し、キーワードも searchByKeyword で検索して、両方の結果をAIが統合
 4. 具体的な条件がない場合: searchByKeyword([]) で全件取得
