@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { client } from '../../lib/init/line';
+import { client, messagingApiClient } from '../../lib/init/line';
 import { saveUserProfile } from '../../lib/User/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
@@ -48,6 +48,18 @@ const trimGoogleMapLink = (text: string): string | null => {
   return googleMapsUrl || null;
 };
 
+
+const showLoading = async (userId: string, groupId?: string) => {
+  if (groupId) return;
+  try {
+    await messagingApiClient.showLoadingAnimation({
+      chatId: userId,
+      loadingSeconds: 20,
+    });
+  } catch (error) {
+    console.error('Error showing loading animation:', error);
+  }
+};
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
@@ -110,6 +122,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         console.log({messageText})
 
         if (isGoogleMapsUrl(messageText)) {
+          await showLoading(userId, groupId);
           try {
             const result = await saveGoogleMapsLink({
               mapUrl: trimGoogleMapLink(messageText) || '',
@@ -136,6 +149,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
             if (mentionQuery) {
               // クエリありの場合: AI検索
+              await showLoading(userId, groupId);
               try {
                 const results = await handleMentionSearch(mentionQuery, userId, groupId);
                 const message = buildSearchResultMessage(results, mentionQuery);

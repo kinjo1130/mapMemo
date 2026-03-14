@@ -121,6 +121,15 @@ export default function Home() {
     }
   }, [profile, loadLinks]);
 
+  // LIFF起動時にクエリパラメータから検索を実行
+  useEffect(() => {
+    if (router.isReady && router.query.search && profile) {
+      const searchQuery = router.query.search as string;
+      setInputValue(searchQuery);
+      handleSearchInputChange(searchQuery);
+    }
+  }, [router.isReady, router.query.search, profile]);
+
   useEffect(() => {
     if (liff) {
       if (liff.getOS() !== "web") {

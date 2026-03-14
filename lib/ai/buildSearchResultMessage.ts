@@ -97,7 +97,7 @@ function buildBubble(link: Link) {
         height: 'sm',
         action: {
           type: 'uri',
-          label: 'Google Mapsで見る',
+          label: '開く',
           uri: mapUrl,
         },
         color: '#1DB446',
@@ -180,7 +180,72 @@ export function buildSearchResultMessage(
     } as Message;
   }
 
-  const bubbles = links.slice(0, 10).map(buildBubble);
+  const LIFF_URL = 'https://liff.line.me/2005710452-e6m8Ao66';
+
+  if (links.length >= 5) {
+    const bubbles = links.slice(0, 4).map(buildBubble);
+    const remainingCount = links.length - 4;
+
+    const seeMoreBubble = {
+      type: 'bubble',
+      size: 'micro',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '🔍',
+            size: 'xxl',
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: `他にも ${remainingCount}件 の結果があります`,
+            wrap: true,
+            size: 'sm',
+            align: 'center',
+            margin: 'lg',
+            color: '#666666',
+          },
+        ],
+        justifyContent: 'center',
+        paddingAll: '13px',
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          {
+            type: 'button',
+            style: 'primary',
+            height: 'sm',
+            action: {
+              type: 'uri',
+              label: 'すべての結果を見る',
+              uri: `${LIFF_URL}?search=${encodeURIComponent(searchQuery)}`,
+            },
+            color: '#1DB446',
+          },
+        ],
+        flex: 0,
+      },
+    };
+
+    bubbles.push(seeMoreBubble);
+
+    return {
+      type: 'flex',
+      altText: `「${searchQuery}」の検索結果: ${links.length}件`,
+      contents: {
+        type: 'carousel',
+        contents: bubbles,
+      },
+    } as Message;
+  }
+
+  const bubbles = links.map(buildBubble);
 
   return {
     type: 'flex',
