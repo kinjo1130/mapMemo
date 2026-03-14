@@ -25,17 +25,7 @@ function docsToLinks(snapshot: { docs: { id: string; data: () => Record<string, 
 async function fetchUserLinks(ctx: SearchContext): Promise<Link[]> {
   const linksRef = collection(db, 'Links');
 
-  if (ctx.groupId) {
-    const q = query(
-      linksRef,
-      where('members', 'array-contains', ctx.userId),
-      where('groupId', '==', ctx.groupId)
-    );
-    const snapshot = await getDocs(q);
-    return docsToLinks(snapshot);
-  }
-
-  // or() を使わず2つのクエリを並行実行してマージ（インデックス不要）
+  // グループチャットでもユーザーの全リンクを検索対象にする
   const [memberSnapshot, userSnapshot] = await Promise.all([
     getDocs(query(linksRef, where('members', 'array-contains', ctx.userId))),
     getDocs(query(linksRef, where('userId', '==', ctx.userId))),
