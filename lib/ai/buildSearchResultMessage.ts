@@ -84,6 +84,32 @@ function buildBubble(link: Link) {
     });
   }
 
+  // 追加者
+  if (link.displayName) {
+    const addedByContents: any[] = [];
+    if (link.userPictureUrl) {
+      addedByContents.push({
+        type: 'icon',
+        url: link.userPictureUrl,
+        size: 'xxs',
+      });
+    }
+    addedByContents.push({
+      type: 'text',
+      text: link.displayName,
+      size: 'xxs',
+      color: '#999999',
+      flex: 0,
+    });
+    bodyContents.push({
+      type: 'box',
+      layout: 'baseline',
+      margin: 'md',
+      spacing: 'sm',
+      contents: addedByContents,
+    });
+  }
+
   // Footer
   const mapUrl = link.googleMapsUrl || link.link;
   const footer = {

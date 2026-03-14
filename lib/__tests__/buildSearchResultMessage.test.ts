@@ -106,6 +106,57 @@ describe('buildSearchResultMessage', () => {
     expect(seeMoreBubble.body.contents[1].text).toContain('1件');
   });
 
+  it('バブルに追加者の表示名が含まれる', () => {
+    const links = [
+      createMockLink({
+        name: 'テスト場所',
+        displayName: '太郎',
+        userPictureUrl: 'https://example.com/icon.jpg',
+      }),
+    ];
+
+    const result = buildSearchResultMessage(links, 'カフェ');
+
+    const bubble = (result as any).contents.contents[0];
+    const bodyContents = bubble.body.contents;
+    const addedByBox = bodyContents.find(
+      (c: any) =>
+        c.type === 'box' &&
+        c.layout === 'baseline' &&
+        c.contents?.some((inner: any) => inner.text === '太郎')
+    );
+    expect(addedByBox).toBeDefined();
+    // アイコンも含まれる
+    expect(
+      addedByBox.contents.find((c: any) => c.type === 'icon')
+    ).toBeDefined();
+  });
+
+  it('userPictureUrlがない場合はアイコンなしで表示名のみ', () => {
+    const links = [
+      createMockLink({
+        name: 'テスト場所',
+        displayName: '花子',
+        userPictureUrl: '',
+      }),
+    ];
+
+    const result = buildSearchResultMessage(links, 'カフェ');
+
+    const bubble = (result as any).contents.contents[0];
+    const bodyContents = bubble.body.contents;
+    const addedByBox = bodyContents.find(
+      (c: any) =>
+        c.type === 'box' &&
+        c.layout === 'baseline' &&
+        c.contents?.some((inner: any) => inner.text === '花子')
+    );
+    expect(addedByBox).toBeDefined();
+    expect(
+      addedByBox.contents.find((c: any) => c.type === 'icon')
+    ).toBeUndefined();
+  });
+
   it('altTextに検索クエリと件数が含まれる', () => {
     const links = Array.from({ length: 3 }, (_, i) =>
       createMockLink({ name: `場所${i + 1}` })
