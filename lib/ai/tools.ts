@@ -51,7 +51,7 @@ async function fetchUserLinks(ctx: SearchContext): Promise<Link[]> {
   return Array.from(linkMap.values());
 }
 
-function haversineDistance(
+export function haversineDistance(
   lat1: number,
   lng1: number,
   lat2: number,
@@ -138,9 +138,16 @@ export function createSearchTools(ctx: SearchContext) {
       inputSchema: z.object({
         lat: z.number().describe('緯度'),
         lng: z.number().describe('経度'),
+        radiusKm: z
+          .number()
+          .optional()
+          .describe(
+            '検索半径（km）。指定した距離以内の地点のみ返します。デフォルト: 50km'
+          ),
       }),
-      execute: async ({ lat, lng }) => {
+      execute: async ({ lat, lng, radiusKm }) => {
         try {
+          const radius = radiusKm ?? 50;
           const allLinks = await getLinks();
           const withDistance = allLinks
             .filter((link) => link.lat != null && link.lng != null)
@@ -148,6 +155,7 @@ export function createSearchTools(ctx: SearchContext) {
               link,
               distance: haversineDistance(lat, lng, link.lat!, link.lng!),
             }))
+            .filter((item) => item.distance <= radius)
             .sort((a, b) => a.distance - b.distance);
 
           const results = withDistance.slice(0, 20);
