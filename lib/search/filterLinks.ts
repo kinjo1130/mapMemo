@@ -32,20 +32,6 @@ export function filterByKeywords(links: Link[], searchTerm: string): Link[] {
 }
 
 /**
- * スコア付きマッチング（AI検索用）- 1つでもマッチすればtrue、スコアで順位付け
- */
-export function scoreByKeywords(link: Link, keywords: string[]): { matches: boolean; score: number } {
-  if (keywords.length === 0) return { matches: true, score: 1 };
-
-  let matchCount = 0;
-  for (const term of keywords) {
-    if (matchesTerm(link, term)) matchCount++;
-  }
-
-  return { matches: matchCount > 0, score: matchCount / keywords.length };
-}
-
-/**
  * 日付範囲フィルタ
  */
 export function filterByDateRange(links: Link[], startDate: Date | null, endDate: Date | null): Link[] {

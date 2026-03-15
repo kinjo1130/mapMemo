@@ -1,7 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
 import type { Link } from '@/types/Link';
-import { scoreByKeywords } from '@/lib/search';
 
 function createLink(overrides: Partial<Link> = {}): Link {
   return {
@@ -25,128 +24,67 @@ function createLink(overrides: Partial<Link> = {}): Link {
   };
 }
 
-describe('scoreByKeywords', () => {
-  it('キーワードが空の場合はマッチする', () => {
-    const result = scoreByKeywords(createLink(), []);
-    expect(result).toEqual({ matches: true, score: 1 });
+const mockLinks: Link[] = [
+  createLink({ docId: 'doc1', name: '大分駅前カフェ', address: '大分県大分市', categories: ['cafe'] }),
+  createLink({ docId: 'doc2', name: '東京ラーメン', address: '東京都新宿区', categories: ['restaurant'] }),
+  createLink({ docId: 'doc3', name: '大分温泉旅館', address: '大分県別府市', tags: ['温泉'] }),
+  createLink({ docId: 'doc4', name: '福岡カフェ', address: '福岡県福岡市', categories: ['cafe'] }),
+];
+
+vi.mock('../ai/tools', () => ({
+  fetchUserLinks: vi.fn().mockResolvedValue(mockLinks),
+}));
+
+// vi.mockの後にimport
+const { handleMentionSearch } = await import('../ai/handleMentionSearch');
+
+describe('handleMentionSearch', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('全キーワードがマッチすればスコア1.0', () => {
-    const link = createLink({ name: '大分駅前カフェ', address: '大分県大分市' });
-    const result = scoreByKeywords(link, ['大分', 'カフェ']);
-    expect(result.matches).toBe(true);
-    expect(result.score).toBe(1);
+  it('キーワードで検索してマッチするリンクを返す', async () => {
+    const results = await handleMentionSearch('大分', 'user1');
+    expect(results.length).toBe(2);
+    expect(results.map((r) => r.docId).sort()).toEqual(['doc1', 'doc3']);
   });
 
-  it('一部のキーワードのみマッチでもmatchesはtrue', () => {
-    const link = createLink({ name: '大分駅前レストラン', address: '大分県大分市' });
-    const result = scoreByKeywords(link, ['大分', '店']);
-    expect(result.matches).toBe(true);
-    expect(result.score).toBe(0.5);
+  it('複数キーワードでAND検索する', async () => {
+    const results = await handleMentionSearch('大分 カフェ', 'user1');
+    expect(results.length).toBe(1);
+    expect(results[0].docId).toBe('doc1');
   });
 
-  it('キーワードが一つもマッチしない場合はmatchesがfalse', () => {
-    const link = createLink({ name: '東京タワー', address: '東京都港区' });
-    const result = scoreByKeywords(link, ['大分', '店']);
-    expect(result.matches).toBe(false);
-    expect(result.score).toBe(0);
+  it('空のクエリは全件返す', async () => {
+    const results = await handleMentionSearch('', 'user1');
+    expect(results.length).toBe(4);
   });
 
-  it('カテゴリでマッチする', () => {
-    const link = createLink({ name: 'テスト店舗', categories: ['restaurant'] });
-    const result = scoreByKeywords(link, ['restaurant']);
-    expect(result.matches).toBe(true);
-    expect(result.score).toBe(1);
+  it('マッチしない場合は空配列を返す', async () => {
+    const results = await handleMentionSearch('北海道', 'user1');
+    expect(results.length).toBe(0);
   });
 
-  it('タグでマッチする', () => {
-    const link = createLink({ name: 'テスト店舗', tags: ['ランチ'] });
-    const result = scoreByKeywords(link, ['ランチ']);
-    expect(result.matches).toBe(true);
-    expect(result.score).toBe(1);
+  it('結果は最大10件に制限される', async () => {
+    const { fetchUserLinks } = await import('../ai/tools');
+    const manyLinks = Array.from({ length: 15 }, (_, i) =>
+      createLink({ docId: `doc${i}`, name: `テスト店${i}`, address: 'テスト' })
+    );
+    vi.mocked(fetchUserLinks).mockResolvedValueOnce(manyLinks);
+
+    const results = await handleMentionSearch('テスト', 'user1');
+    expect(results.length).toBe(10);
   });
 
-  it('スコア順でソートできる', () => {
-    const links = [
-      createLink({ docId: 'a', name: '大分の店', address: '福岡県' }),
-      createLink({ docId: 'b', name: '大分駅前カフェ', address: '大分県大分市' }),
-      createLink({ docId: 'c', name: '東京カフェ', address: '東京都' }),
-    ];
-
-    const scored = links
-      .map((link) => ({ link, ...scoreByKeywords(link, ['大分', 'カフェ']) }))
-      .filter((item) => item.matches)
-      .sort((a, b) => b.score - a.score);
-
-    expect(scored.length).toBe(3);
-    expect(scored[0].link.docId).toBe('b'); // 両方マッチ（大分+カフェ）
-    expect(scored[0].score).toBe(1);
-    expect(scored[1].score).toBe(0.5); // 1つだけマッチ
-    expect(scored[2].score).toBe(0.5); // 1つだけマッチ
-    // 「大分」のみマッチと「カフェ」のみマッチ
-    const halfMatchIds = [scored[1].link.docId, scored[2].link.docId].sort();
-    expect(halfMatchIds).toEqual(['a', 'c']);
-  });
-});
-
-describe('toolResult docId収集ロジック', () => {
-  it('配列のtoolResultからdocIdを収集できる', () => {
-    const toolResults = [
-      {
-        output: [
-          { docId: 'doc1', name: 'Place 1' },
-          { docId: 'doc2', name: 'Place 2' },
-        ],
-      },
-      {
-        output: [
-          { docId: 'doc2', name: 'Place 2' },
-          { docId: 'doc3', name: 'Place 3' },
-        ],
-      },
-    ];
-
-    const linkMap = new Map<string, { docId: string; name: string }>();
-    for (const toolResult of toolResults) {
-      const output = toolResult.output as unknown;
-      if (Array.isArray(output)) {
-        for (const item of output) {
-          if (item && typeof item === 'object' && 'docId' in item) {
-            const linkData = item as { docId: string; name: string };
-            if (!linkMap.has(linkData.docId)) {
-              linkMap.set(linkData.docId, linkData);
-            }
-          }
-        }
-      }
-    }
-
-    expect(linkMap.size).toBe(3);
-    expect(Array.from(linkMap.keys())).toEqual(['doc1', 'doc2', 'doc3']);
+  it('カテゴリでマッチする', async () => {
+    const results = await handleMentionSearch('cafe', 'user1');
+    expect(results.length).toBe(2);
+    expect(results.map((r) => r.docId).sort()).toEqual(['doc1', 'doc4']);
   });
 
-  it('エラーオブジェクトが返された場合はスキップする', () => {
-    const toolResults = [
-      { output: { error: 'something went wrong' } },
-      { output: [{ docId: 'doc1', name: 'Place 1' }] },
-    ];
-
-    const linkMap = new Map<string, { docId: string; name: string }>();
-    for (const toolResult of toolResults) {
-      const output = toolResult.output as unknown;
-      if (Array.isArray(output)) {
-        for (const item of output) {
-          if (item && typeof item === 'object' && 'docId' in item) {
-            const linkData = item as { docId: string; name: string };
-            if (!linkMap.has(linkData.docId)) {
-              linkMap.set(linkData.docId, linkData);
-            }
-          }
-        }
-      }
-    }
-
-    expect(linkMap.size).toBe(1);
-    expect(linkMap.has('doc1')).toBe(true);
+  it('タグでマッチする', async () => {
+    const results = await handleMentionSearch('温泉', 'user1');
+    expect(results.length).toBe(1);
+    expect(results[0].docId).toBe('doc3');
   });
 });
