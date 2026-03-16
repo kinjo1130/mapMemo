@@ -1,5 +1,5 @@
 import { fetchUserLinks } from './tools';
-import { filterByKeywords } from '@/lib/search';
+import { filterByKeywordsRanked } from '@/lib/search';
 import { Link } from '@/types/Link';
 
 export async function handleMentionSearch(
@@ -9,7 +9,7 @@ export async function handleMentionSearch(
 ): Promise<Link[]> {
   const allLinks = await fetchUserLinks({ userId, groupId });
 
-  const filtered = filterByKeywords(allLinks, searchQuery);
+  const filtered = filterByKeywordsRanked(allLinks, searchQuery);
 
   console.log(
     `[handleMentionSearch] query="${searchQuery}", allLinks=${allLinks.length}, matched=${filtered.length}`

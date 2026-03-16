@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
 import type { Link } from '@/types/Link';
-import { filterByKeywords } from '@/lib/search';
+import { filterByKeywords, filterByKeywordsRanked } from '@/lib/search';
 
 const mockTimestamp = { toDate: () => new Date('2024-01-01') } as unknown as Timestamp;
 
@@ -145,6 +145,79 @@ describe('検索フィルタ: editorialSummary', () => {
     const result = filterByKeywords(links, '広島 飲食店');
     expect(result).toHaveLength(1);
     expect(result[0].docId).toBe('1');
+  });
+});
+
+describe('検索フィルタ: カテゴリ日本語マッチ', () => {
+  const links: Link[] = [
+    createLink({ docId: '1', name: 'すし匠', categories: ['restaurant', 'food'] }),
+    createLink({ docId: '2', name: 'ドトール', categories: ['cafe'] }),
+    createLink({ docId: '3', name: '上野公園', categories: ['park'] }),
+  ];
+
+  it('日本語でカテゴリ検索できる（レストラン→restaurant）', () => {
+    const result = filterByKeywords(links, 'レストラン');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('1');
+  });
+
+  it('日本語でカテゴリ検索できる（カフェ→cafe）', () => {
+    const result = filterByKeywords(links, 'カフェ');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('2');
+  });
+
+  it('日本語でカテゴリ検索できる（公園→park）', () => {
+    const result = filterByKeywords(links, '公園');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('3');
+  });
+
+  it('日本語カテゴリの部分一致で検索できる（飲食→food）', () => {
+    const result = filterByKeywords(links, '飲食');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('1');
+  });
+});
+
+describe('検索フィルタ: filterByKeywordsRanked', () => {
+  const links: Link[] = [
+    createLink({ docId: '1', name: '大分カフェ', address: '大分県大分市', categories: ['cafe'] }),
+    createLink({ docId: '2', name: '東京ラーメン', address: '東京都新宿区', categories: ['restaurant'] }),
+    createLink({ docId: '3', name: '大分ラーメン', address: '大分県別府市' }),
+    createLink({ docId: '4', name: '福岡カフェ', address: '福岡県福岡市', categories: ['cafe'] }),
+  ];
+
+  it('AND一致がある場合はAND結果を返す', () => {
+    const result = filterByKeywordsRanked(links, '大分 カフェ');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('1');
+  });
+
+  it('AND一致が0件の場合ORフォールバック', () => {
+    const result = filterByKeywordsRanked(links, '大分 レストラン');
+    expect(result.length).toBeGreaterThan(0);
+    // 大分(doc1,doc3) + レストラン(doc2) = 3件
+    expect(result).toHaveLength(3);
+  });
+
+  it('ORフォールバック時はマッチ数の多い順', () => {
+    // "大分 ラーメン カフェ" → doc1(大分+カフェ=2), doc3(大分+ラーメン=2), doc2(ラーメン=1), doc4(カフェ=1)
+    const result = filterByKeywordsRanked(links, '大分 ラーメン カフェ');
+    expect(result).toHaveLength(4);
+    // スコア2のdoc1,doc3が先、スコア1のdoc2,doc4が後
+    const first2 = result.slice(0, 2).map(l => l.docId).sort();
+    expect(first2).toEqual(['1', '3']);
+  });
+
+  it('キーワード1つの場合はAND検索のみ（ORフォールバックなし）', () => {
+    const result = filterByKeywordsRanked(links, '北海道');
+    expect(result).toHaveLength(0);
+  });
+
+  it('空のクエリは全件返す', () => {
+    const result = filterByKeywordsRanked(links, '');
+    expect(result).toHaveLength(4);
   });
 });
 

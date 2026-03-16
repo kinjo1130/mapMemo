@@ -87,4 +87,35 @@ describe('handleMentionSearch', () => {
     expect(results.length).toBe(1);
     expect(results[0].docId).toBe('doc3');
   });
+
+  it('日本語でカテゴリ検索できる（レストラン→restaurant）', async () => {
+    const results = await handleMentionSearch('レストラン', 'user1');
+    expect(results.length).toBe(1);
+    expect(results[0].docId).toBe('doc2');
+  });
+
+  it('ANDで0件の場合ORフォールバックで結果を返す', async () => {
+    // "大分 ラーメン" → AND: 0件（大分にラーメン店なし）→ OR: 大分2件 + ラーメン1件
+    const results = await handleMentionSearch('大分 ラーメン', 'user1');
+    expect(results.length).toBe(3);
+    // マッチ数が多い順（大分は1件マッチ、ラーメンも1件マッチで同スコア）
+    expect(results.map((r) => r.docId).sort()).toEqual(['doc1', 'doc2', 'doc3']);
+  });
+
+  it('ORフォールバック時はマッチ数の多い順に並ぶ', async () => {
+    const { fetchUserLinks } = await import('../ai/tools');
+    const testLinks = [
+      createLink({ docId: 'a', name: '大分カフェ', address: '大分県', categories: ['cafe'] }),
+      createLink({ docId: 'b', name: '東京ラーメン', address: '東京都' }),
+      createLink({ docId: 'c', name: '大分ラーメン', address: '大分県' }),
+    ];
+    vi.mocked(fetchUserLinks).mockResolvedValueOnce(testLinks);
+
+    // "大分 ラーメン カフェ" → AND: 0件 → OR: doc_a(大分+カフェ=2), doc_c(大分+ラーメン=2), doc_b(ラーメン=1)
+    const results = await handleMentionSearch('大分 ラーメン カフェ', 'user1');
+    expect(results.length).toBe(3);
+    // スコア2のものが先
+    expect(results[0].docId).not.toBe('b');
+    expect(results[2].docId).toBe('b');
+  });
 });

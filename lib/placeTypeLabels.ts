@@ -1,5 +1,5 @@
 /** Google Maps Place Types → 日本語ラベルのマッピング */
-const PLACE_TYPE_LABELS: Record<string, string> = {
+export const PLACE_TYPE_LABELS: Record<string, string> = {
   // 飲食
   restaurant: 'レストラン',
   cafe: 'カフェ',
