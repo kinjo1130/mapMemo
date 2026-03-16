@@ -18,7 +18,8 @@ export function matchesTerm(link: Link, term: string): boolean {
     (!!link.groupName && link.groupName.toLowerCase().includes(lower)) ||
     (!!link.displayName && link.displayName.toLowerCase().includes(lower)) ||
     (!!link.categories && link.categories.some(cat => cat.toLowerCase().includes(lower))) ||
-    (!!link.tags && link.tags.some(tag => tag.toLowerCase().includes(lower)))
+    (!!link.tags && link.tags.some(tag => tag.toLowerCase().includes(lower))) ||
+    (!!link.editorialSummary && link.editorialSummary.toLowerCase().includes(lower))
   );
 }
 

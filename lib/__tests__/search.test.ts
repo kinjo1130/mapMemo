@@ -86,6 +86,17 @@ describe('matchesTerm', () => {
     expect(matchesTerm(link, 'ランチ')).toBe(true);
   });
 
+  it('editorialSummaryでマッチする', () => {
+    const link = createLink({ editorialSummary: '広島風お好み焼きが人気の飲食店' });
+    expect(matchesTerm(link, '広島')).toBe(true);
+    expect(matchesTerm(link, '飲食店')).toBe(true);
+  });
+
+  it('editorialSummaryがnullでもエラーにならない', () => {
+    const link = createLink({ name: 'ダミー', address: '', displayName: '', groupName: '', editorialSummary: null });
+    expect(matchesTerm(link, '存在しないワード')).toBe(false);
+  });
+
   it('マッチしない場合はfalse', () => {
     const link = createLink({ name: 'テスト', address: '東京' });
     expect(matchesTerm(link, '大阪')).toBe(false);

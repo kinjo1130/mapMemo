@@ -116,6 +116,38 @@ describe('検索フィルタ: 複合検索', () => {
   });
 });
 
+describe('検索フィルタ: editorialSummary', () => {
+  const links: Link[] = [
+    createLink({ docId: '1', name: '広島のお店', editorialSummary: '広島風お好み焼きが人気の飲食店' }),
+    createLink({ docId: '2', name: '東京ラーメン', editorialSummary: '濃厚豚骨ラーメンの名店' }),
+    createLink({ docId: '3', name: 'カフェ', editorialSummary: null }),
+  ];
+
+  it('editorialSummaryの内容で検索できる', () => {
+    const result = filterByKeywords(links, '飲食店');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('1');
+  });
+
+  it('editorialSummaryの部分一致で検索できる', () => {
+    const result = filterByKeywords(links, '豚骨');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('2');
+  });
+
+  it('editorialSummaryがnullの場合はスキップされる', () => {
+    const result = filterByKeywords(links, '飲食');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('1');
+  });
+
+  it('editorialSummaryと他フィールドのAND検索ができる', () => {
+    const result = filterByKeywords(links, '広島 飲食店');
+    expect(result).toHaveLength(1);
+    expect(result[0].docId).toBe('1');
+  });
+});
+
 describe('検索フィルタ: 既存データ互換性', () => {
   it('categories/tagsがundefinedでもエラーにならない', () => {
     const link = createLink({ docId: '1', name: 'テスト' });
