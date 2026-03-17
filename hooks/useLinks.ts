@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { collection, query, where, getDocs, deleteDoc, doc, limit, or, orderBy, OrderByDirection } from "firebase/firestore";
 import { db } from "../lib/init/firebase";
 import { Link } from "@/types/Link";
+import { deduplicateLinks } from "@/lib/deduplicateLinks";
 
 export const BASE_QUERY =({
   userId,
@@ -39,12 +40,15 @@ export const useLinks = (linksPerPage: number) => {
       let q = BASE_QUERY({ userId, orderByField, orderDirection });
 
       const querySnapshot = await getDocs(q);
-      const newLinks = querySnapshot.docs.map(
+      const allNewLinks = querySnapshot.docs.map(
         (doc) => {
           const data = doc.data();
           return { ...data, docId: doc.id, categories: data.categories || [], tags: data.tags || [] } as Link;
         }
       );
+
+      // OR クエリで同一ドキュメントが複数返される場合があるため、docId で重複排除
+      const newLinks = deduplicateLinks(allNewLinks);
 
       setLinks((prevLinks) => {
         const uniqueNewLinks = newLinks.filter(
@@ -95,15 +99,16 @@ export const useLinks = (linksPerPage: number) => {
       : BASE_QUERY({ userId, orderByField, orderDirection });
 
       const querySnapshot = await getDocs(baseQuery);
-      const allLinks: Link[] = [];
+      const rawLinks: Link[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        allLinks.push({ ...data, docId: doc.id, categories: data.categories || [], tags: data.tags || [] } as Link);
+        rawLinks.push({ ...data, docId: doc.id, categories: data.categories || [], tags: data.tags || [] } as Link);
       });
+      const allLinks = deduplicateLinks(rawLinks);
 
-      const filteredLinks = allLinks.filter(link => {
-        return link.groupId === groupId;
-      });
+      const filteredLinks = groupId !== ""
+        ? allLinks.filter(link => link.groupId === groupId)
+        : allLinks;
 
       setLinks(filteredLinks.slice(0, linksPerPage));
       setHasMore(filteredLinks.length > linksPerPage);

@@ -124,7 +124,7 @@ const LinkList: React.FC<LinkListProps> = ({
       <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {links.map((link, index) => (
           <li
-            key={`${link.docId}-${index}`}
+            key={link.docId}
             className="overflow-hidden flex p-0 border border-gray-100 rounded-lg"
           >
             <div 
