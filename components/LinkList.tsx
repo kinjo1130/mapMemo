@@ -1,8 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from "react";
-import { MapPin, Trash2, MessageCircle, BookmarkPlus, Tag } from "lucide-react";
+import { MapPin, Trash2, MessageCircle, BookmarkPlus } from "lucide-react";
 import Toast from "./Toast";
 import CollectionModal from "./CollectionModal";
-import TagEditModal from "./TagEditModal";
 import type { Link } from "@/types/Link";
 import { formatDate } from "@/utils/date";
 
@@ -15,7 +14,6 @@ interface LinkListProps {
   userId: string;
   onFilterByUser?: (userName: string) => void;
   onFilterByGroup?: (groupName: string) => void;
-  onTagsUpdated?: (docId: string, tags: string[]) => void;
 }
 
 const LinkList: React.FC<LinkListProps> = ({
@@ -27,26 +25,20 @@ const LinkList: React.FC<LinkListProps> = ({
   userId,
   onFilterByUser,
   onFilterByGroup,
-  onTagsUpdated,
 }) => {
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
   const [selectedLink, setSelectedLink] = useState<Link | null>(null);
-  const [tagEditLink, setTagEditLink] = useState<Link | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
   // 地図リンクを開く関数
   const handleOpenMap = useCallback((link: Link) => {
-    if (link.googleMapsUrl) {
-      window.open(link.googleMapsUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    // フォールバック: 場所の名前とアドレスを使ってGoogle Mapのクエリを組み立てる
+    // 場所の名前とアドレスを使ってGoogle Mapのクエリを組み立てる
     const query = encodeURIComponent(link.name || link.address || "");
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
-
+    
     if (query) {
       window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
     }
@@ -124,7 +116,7 @@ const LinkList: React.FC<LinkListProps> = ({
       <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {links.map((link, index) => (
           <li
-            key={link.docId}
+            key={`${link.docId}-${index}`}
             className="overflow-hidden flex p-0 border border-gray-100 rounded-lg"
           >
             <div 
@@ -210,21 +202,6 @@ const LinkList: React.FC<LinkListProps> = ({
                   </div>
                 )}
                 
-                {/* タグ表示 */}
-                {link.tags && link.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {link.tags.map(tag => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full"
-                      >
-                        <Tag className="w-2.5 h-2.5" />
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
                 {/* 保存日付を表示 */}
                 {link.timestamp && (
                   <div className="mb-2">
@@ -233,16 +210,8 @@ const LinkList: React.FC<LinkListProps> = ({
                     </span>
                   </div>
                 )}
-
+                
                 <div className="flex justify-end mt-auto space-x-4">
-                  <button
-                    onClick={() => setTagEditLink(link)}
-                    className="text-blue-600 flex items-center"
-                    aria-label="タグを編集"
-                  >
-                    <Tag className="w-5 h-5" />
-                    <span className="ml-1 text-xs">タグ</span>
-                  </button>
                   <button
                     onClick={() => handleCollectionClick(link)}
                     className="text-blue-600 flex items-center"
@@ -288,15 +257,6 @@ const LinkList: React.FC<LinkListProps> = ({
           onClose={handleCloseModal}
           link={selectedLink}
           userId={userId}
-        />
-      )}
-
-      {tagEditLink && (
-        <TagEditModal
-          isOpen={!!tagEditLink}
-          onClose={() => setTagEditLink(null)}
-          link={tagEditLink}
-          onTagsUpdated={onTagsUpdated || (() => {})}
         />
       )}
 

@@ -44,8 +44,7 @@ export default function Home() {
     handleDelete,
     loadLinks,
     clearSearchTerm,
-    searchLinksByGroup,
-    handleTagsUpdated
+    searchLinksByGroup
   } = useSearch(profile?.userId ?? "");
 
   const {
@@ -121,15 +120,6 @@ export default function Home() {
     }
   }, [profile, loadLinks]);
 
-  // LIFF起動時にクエリパラメータから検索を実行
-  useEffect(() => {
-    if (router.isReady && router.query.search && profile) {
-      const searchQuery = router.query.search as string;
-      setInputValue(searchQuery);
-      handleSearchInputChange(searchQuery);
-    }
-  }, [router.isReady, router.query.search, profile]);
-
   useEffect(() => {
     if (liff) {
       if (liff.getOS() !== "web") {
@@ -171,10 +161,16 @@ export default function Home() {
     }
   };
 
-  // テキストでフィルタリングする関数（ユーザー名・グループ名共通）
-  const handleFilterByText = useCallback((text: string) => {
-    setInputValue(text);
-    handleSearchInputChange(text);
+  // ユーザー名でフィルタリングする関数
+  const handleFilterByUser = useCallback((userName: string) => {
+    setInputValue(userName);
+    handleSearchInputChange(userName);
+  }, [handleSearchInputChange]);
+
+  // グループ名でフィルタリングする関数
+  const handleFilterByGroup = useCallback((groupName: string) => {
+    setInputValue(groupName);
+    handleSearchInputChange(groupName);
   }, [handleSearchInputChange]);
 
   // タブごとの動的なタイトル設定
@@ -272,7 +268,7 @@ export default function Home() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="名前, 住所, グループ名, タグで検索"
+                placeholder="名前, 住所, 地点名, グループ名で検索"
                 className="w-full py-2 px-3 pr-20 border rounded text-base"
               />
               {inputValue && (
@@ -314,9 +310,8 @@ export default function Home() {
                 hasMore={hasMore && !searchTerm}
                 isLoading={isLoading || isSearching}
                 userId={profile?.userId ?? ""}
-                onFilterByUser={handleFilterByText}
-                onFilterByGroup={handleFilterByText}
-                onTagsUpdated={handleTagsUpdated}
+                onFilterByUser={handleFilterByUser}
+                onFilterByGroup={handleFilterByGroup}
               />
             </div>
           )}
