@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { client, messagingApiClient } from '../../lib/init/line';
+import { client } from '../../lib/init/line';
 import { saveUserProfile } from '../../lib/User/saveUserProfile';
 import { Profile } from '@line/bot-sdk';
 import { sendReplyMessage } from '../../lib/sendReplyMessage';
@@ -11,8 +11,6 @@ import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 import { joinGroup } from '@/lib/Group/joinGroup';
 import { IsJoinGroup } from '@/lib/Group/IsJoinGroup';
-import { handleMentionSearch } from '@/lib/ai/handleMentionSearch';
-import { buildSearchResultMessage } from '@/lib/ai/buildSearchResultMessage';
 
 const isGoogleMapsUrl = (text: string) => {
   // URLを抽出するための正規表現
@@ -48,18 +46,6 @@ const trimGoogleMapLink = (text: string): string | null => {
   return googleMapsUrl || null;
 };
 
-
-const showLoading = async (userId: string, groupId?: string) => {
-  if (groupId) return;
-  try {
-    await messagingApiClient.showLoadingAnimation({
-      chatId: userId,
-      loadingSeconds: 20,
-    });
-  } catch (error) {
-    console.error('Error showing loading animation:', error);
-  }
-};
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
@@ -122,7 +108,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         console.log({messageText})
 
         if (isGoogleMapsUrl(messageText)) {
-          await showLoading(userId, groupId);
           try {
             const result = await saveGoogleMapsLink({
               mapUrl: trimGoogleMapLink(messageText) || '',
@@ -145,98 +130,83 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           // メンションチェック (@mapmemo が含まれているか)
           if (messageText.includes('@mapMemo')) {
             console.log("Mentioned @mapMemo");
-            const mentionQuery = messageText.replace(/@mapMemo/gi, '').trim();
-
-            if (mentionQuery) {
-              // クエリありの場合: AI検索
-              await showLoading(userId, groupId);
-              try {
-                const results = await handleMentionSearch(mentionQuery, userId, groupId);
-                const message = buildSearchResultMessage(results, mentionQuery);
-                await sendReplyMessage(replyToken, message);
-              } catch (error) {
-                console.error('Error in mention search:', error);
-                await sendReplyMessage(replyToken, '検索中にエラーが発生しました。もう一度お試しください。');
-              }
-            } else {
-              // クエリなしの場合: ウェルカムメッセージ
-              await sendReplyMessage(replyToken, {
-                type: 'flex',
-                altText: '保存したマップを確認できます',
-                contents: {
-                  type: "bubble",
-                  body: {
-                    type: "box",
-                    layout: "vertical",
-                    contents: [
-                      {
-                        type: "text",
-                        text: "MapMemo",
-                        weight: "bold",
-                        size: "xl",
-                        color: "#1DB446"
-                      },
-                      {
-                        type: "text",
-                        text: "お気に入りの場所を保存・管理",
-                        size: "sm",
-                        color: "#999999",
-                        margin: "md"
-                      },
-                      {
-                        type: "separator",
-                        margin: "xxl"
-                      },
-                      {
-                        type: "box",
-                        layout: "vertical",
-                        margin: "xxl",
-                        spacing: "sm",
-                        contents: [
-                          {
-                            type: "text",
-                            text: "MapMemoへようこそ！",
-                            size: "md",
-                            weight: "bold"
-                          },
-                          {
-                            type: "text",
-                            text: "お気に入りの場所を簡単に保存して、いつでも確認できます。",
-                            wrap: true,
-                            size: "xs",
-                            margin: "md",
-                            color: "#666666"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  footer: {
-                    type: "box",
-                    layout: "vertical",
-                    spacing: "sm",
-                    contents: [
-                      {
-                        type: "button",
-                        style: "primary",
-                        height: "sm",
-                        action: {
-                          type: "uri",
-                          label: "保存した地点一覧を見る",
-                          uri: "https://liff.line.me/2005710452-e6m8Ao66"
+            const replyToken = event.replyToken;
+            await sendReplyMessage(replyToken, {
+              type: 'flex',
+              altText: '保存したマップを確認できます',
+              contents: {
+                type: "bubble",
+                body: {
+                  type: "box",
+                  layout: "vertical",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "MapMemo",
+                      weight: "bold",
+                      size: "xl",
+                      color: "#1DB446"
+                    },
+                    {
+                      type: "text",
+                      text: "お気に入りの場所を保存・管理",
+                      size: "sm",
+                      color: "#999999",
+                      margin: "md"
+                    },
+                    {
+                      type: "separator",
+                      margin: "xxl"
+                    },
+                    {
+                      type: "box",
+                      layout: "vertical",
+                      margin: "xxl",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "MapMemoへようこそ！",
+                          size: "md",
+                          weight: "bold"
                         },
-                        color: "#1DB446"
+                        {
+                          type: "text",
+                          text: "お気に入りの場所を簡単に保存して、いつでも確認できます。",
+                          wrap: true,
+                          size: "xs",
+                          margin: "md",
+                          color: "#666666"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                footer: {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "button",
+                      style: "primary",
+                      height: "sm",
+                      action: {
+                        type: "uri",
+                        label: "保存した地点一覧を見る",
+                        uri: "https://liff.line.me/2005710452-e6m8Ao66"
                       },
-                      {
-                        type: "spacer",
-                        size: "sm"
-                      }
-                    ],
-                    flex: 0
-                  }
+                      color: "#1DB446"
+                    },
+                    {
+                      type: "spacer",
+                      size: "sm"
+                    }
+                  ],
+                  flex: 0
                 }
-              });
-            }
+              }
+            });
           }
         }
       }

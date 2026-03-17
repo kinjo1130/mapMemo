@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react';
-import { collection, query, where, getDocs, deleteDoc, doc, limit, or, orderBy, OrderByDirection } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, limit, startAfter, getDoc, or, orderBy, OrderByDirection } from "firebase/firestore";
 import { db } from "../lib/init/firebase";
 import { Link } from "@/types/Link";
-import { deduplicateLinks } from "@/lib/deduplicateLinks";
 
 export const BASE_QUERY =({
   userId,
@@ -40,15 +39,9 @@ export const useLinks = (linksPerPage: number) => {
       let q = BASE_QUERY({ userId, orderByField, orderDirection });
 
       const querySnapshot = await getDocs(q);
-      const allNewLinks = querySnapshot.docs.map(
-        (doc) => {
-          const data = doc.data();
-          return { ...data, docId: doc.id, categories: data.categories || [], tags: data.tags || [] } as Link;
-        }
+      const newLinks = querySnapshot.docs.map(
+        (doc) => ({ ...doc.data(), docId: doc.id } as Link)
       );
-
-      // OR クエリで同一ドキュメントが複数返される場合があるため、docId で重複排除
-      const newLinks = deduplicateLinks(allNewLinks);
 
       setLinks((prevLinks) => {
         const uniqueNewLinks = newLinks.filter(
@@ -83,6 +76,46 @@ export const useLinks = (linksPerPage: number) => {
     }
   }, []);
 
+  // const searchLinks = useCallback(async (userId: string, searchTerm: string) => {
+  //   setIsLoading(true);
+  //   console.log('searchLinks');
+  //   try {
+  //     const linksRef = collection(db, 'Links');
+  //     const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+  //     const baseQuery = query(
+  //       linksRef,
+  //       or(
+  //         where("members", "array-contains", userId),
+  //         where("userId", "==", userId)
+  //       ),
+  //       limit(100)  // 検索のベースとなる最大件数
+  //     );
+
+  //     const querySnapshot = await getDocs(baseQuery);
+  //     const allLinks: Link[] = [];
+  //     querySnapshot.forEach((doc) => {
+  //       allLinks.push({ ...doc.data(), docId: doc.id } as Link);
+  //     });
+
+  //     const filteredLinks = allLinks.filter(link => {
+  //       const nameMatches = searchTerms.every(term =>
+  //         link.name.toLowerCase().includes(term)
+  //       );
+  //       const addressMatches = searchTerms.every(term =>
+  //         link.address.toLowerCase().includes(term)
+  //       );
+  //       return nameMatches || addressMatches;
+  //     });
+
+  //     setLinks(filteredLinks.slice(0, linksPerPage));
+  //     setHasMore(filteredLinks.length > linksPerPage);
+  //     setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+  //   } catch (error) {
+  //     console.error('Error searching links:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [linksPerPage]);
   // 自分が所属しているグループごとにフィリタリングできるようにする
   const searchLinksByGroup = useCallback(async (userId: string, groupId: string) => {
     setIsLoading(true);
@@ -99,16 +132,14 @@ export const useLinks = (linksPerPage: number) => {
       : BASE_QUERY({ userId, orderByField, orderDirection });
 
       const querySnapshot = await getDocs(baseQuery);
-      const rawLinks: Link[] = [];
+      const allLinks: Link[] = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        rawLinks.push({ ...data, docId: doc.id, categories: data.categories || [], tags: data.tags || [] } as Link);
+        allLinks.push({ ...doc.data(), docId: doc.id } as Link);
       });
-      const allLinks = deduplicateLinks(rawLinks);
 
-      const filteredLinks = groupId !== ""
-        ? allLinks.filter(link => link.groupId === groupId)
-        : allLinks;
+      const filteredLinks = allLinks.filter(link => {
+        return link.groupId === groupId;
+      });
 
       setLinks(filteredLinks.slice(0, linksPerPage));
       setHasMore(filteredLinks.length > linksPerPage);
@@ -120,12 +151,6 @@ export const useLinks = (linksPerPage: number) => {
     }
   }, [linksPerPage]);
 
-  const handleTagsUpdated = useCallback((docId: string, tags: string[]) => {
-    setLinks((prevLinks) =>
-      prevLinks.map((link) => link.docId === docId ? { ...link, tags } : link)
-    );
-  }, []);
-
-  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup, handleTagsUpdated };
+  return { links, hasMore, isLoading, loadLinks, handleLoadMore, handleDelete, searchLinksByGroup };
 
 };

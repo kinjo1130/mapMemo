@@ -107,8 +107,7 @@ export const getAllCollectionLinks = async (collectionId: string): Promise<Link[
         displayName: data.displayName,
         groupName: data.groupName,
         groupPictureUrl: data.groupPictureUrl,
-        categories: data.categories || [],
-        tags: data.tags || [],
+        // addedAt: data.addedAt
       });
     });
 
