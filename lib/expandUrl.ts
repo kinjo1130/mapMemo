@@ -15,11 +15,16 @@ export async function expandShortUrl(url: string): Promise<string> {
     const response = await fetch(url, { redirect: 'follow' });
     const expandedUrl = response.url;
 
-    // ftid URLの場合、HTMLから座標を抽出してplace URL形式に変換
+    // ftid URLの場合、HTMLから座標と場所名を抽出してplace URL形式に変換
     if (expandedUrl.includes('ftid=')) {
       const html = await response.text();
       const coords = extractCoordsFromHtml(html);
       if (coords) {
+        const placeName = extractPlaceNameFromHtml(html);
+        if (placeName) {
+          // 場所名がある場合は /place/Name/@lat,lng 形式にして正確な検索を可能にする
+          return `https://www.google.com/maps/place/${encodeURIComponent(placeName)}/@${coords.lat},${coords.lng},17z`;
+        }
         return `https://www.google.com/maps/@${coords.lat},${coords.lng},17z`;
       }
     }
@@ -36,6 +41,20 @@ export function extractCoordsFromHtml(html: string): { lat: string; lng: string 
   const match = html.match(/center=(-?[\d.]+)%2C(-?[\d.]+)/);
   if (match) {
     return { lat: match[1], lng: match[2] };
+  }
+  return null;
+}
+
+export function extractPlaceNameFromHtml(html: string): string | null {
+  // og:title メタタグから場所名を取得
+  const match = html.match(/<meta\s+(?:property="og:title"\s+content="([^"]+)"|content="([^"]+)"\s+property="og:title")/);
+  if (match) {
+    const title = match[1] || match[2];
+    // "· 場所名" や "場所名 - Google Maps" などのパターンを整理
+    const cleaned = title.replace(/\s*[-·]\s*Google\s*Maps?\s*$/i, '').trim();
+    if (cleaned && cleaned !== 'Google Maps') {
+      return cleaned;
+    }
   }
   return null;
 }
