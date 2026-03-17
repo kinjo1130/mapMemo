@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { expandShortUrl, extractCoordsFromHtml, extractPlaceInfo } from '../expandUrl';
+import { expandShortUrl, extractCoordsFromHtml, extractPlaceInfo, extractPlaceNameFromHtml } from '../expandUrl';
 
 // ---- extractCoordsFromHtml ----
 
@@ -29,6 +29,35 @@ describe('extractCoordsFromHtml', () => {
 
   it('空文字列の場合はnullを返す', () => {
     expect(extractCoordsFromHtml('')).toBeNull();
+  });
+});
+
+// ---- extractPlaceNameFromHtml ----
+
+describe('extractPlaceNameFromHtml', () => {
+  it('og:title メタタグから場所名を抽出できる', () => {
+    const html = `<meta property="og:title" content="Hidden Hollow">`;
+    expect(extractPlaceNameFromHtml(html)).toBe('Hidden Hollow');
+  });
+
+  it('content が先に来るパターンでも抽出できる', () => {
+    const html = `<meta content="Tokyo Tower" property="og:title">`;
+    expect(extractPlaceNameFromHtml(html)).toBe('Tokyo Tower');
+  });
+
+  it('Google Maps サフィックスを除去する', () => {
+    const html = `<meta property="og:title" content="東京タワー - Google Maps">`;
+    expect(extractPlaceNameFromHtml(html)).toBe('東京タワー');
+  });
+
+  it('og:title が Google Maps のみの場合は null を返す', () => {
+    const html = `<meta property="og:title" content="Google Maps">`;
+    expect(extractPlaceNameFromHtml(html)).toBeNull();
+  });
+
+  it('og:title がない場合は null を返す', () => {
+    const html = `<html><body>No title</body></html>`;
+    expect(extractPlaceNameFromHtml(html)).toBeNull();
   });
 });
 
@@ -99,7 +128,24 @@ describe('expandShortUrl', () => {
     expect(result).toBe(expandedUrl);
   });
 
-  it('ftid URLの場合、HTMLから座標を抽出して@lat,lng形式に変換する', async () => {
+  it('ftid URLの場合、HTMLから座標と場所名を抽出してplace URL形式に変換する', async () => {
+    const ftidUrl = 'https://maps.google.com/maps?ftid=0x353f1c01efa772a9:0x74ecdda135ec596a&entry=gps';
+    const html = `
+      <html><head>
+        <meta property="og:title" content="Hidden Hollow">
+        <meta property="og:image" content="https://maps.google.com/maps/api/staticmap?center=35.50924045%2C139.7698121&zoom=16">
+      </head></html>
+    `;
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      url: ftidUrl,
+      text: vi.fn().mockResolvedValue(html),
+    } as unknown as Response);
+
+    const result = await expandShortUrl('https://maps.app.goo.gl/xyz789');
+    expect(result).toBe('https://www.google.com/maps/place/Hidden%20Hollow/@35.50924045,139.7698121,17z');
+  });
+
+  it('ftid URLで場所名が取れない場合は座標のみの形式にする', async () => {
     const ftidUrl = 'https://maps.google.com/maps?ftid=0x353f1c01efa772a9:0x74ecdda135ec596a&entry=gps';
     const html = `
       <html><head>
