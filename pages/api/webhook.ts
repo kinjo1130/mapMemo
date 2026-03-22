@@ -7,6 +7,7 @@ import { isWithinUserPeriod } from '@/lib/User/checkUserPeriod';
 import { sendPeriodSettingMessage } from '@/lib/sendPeriodSettingMessage';
 import { handlePostbackEvent } from '@/lib/handlePostbackEvent';
 import { saveGoogleMapsLink } from '@/lib/saveGoogleMapsLink';
+import { saveImageAsPlace } from '@/lib/saveImageAsPlace';
 import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 import { joinGroup } from '@/lib/Group/joinGroup';
@@ -210,6 +211,62 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
         }
       }
+      // 画像メッセージの処理
+      if (event.type === 'message' && event.message.type === 'image') {
+        const { userId, groupId } = event.source;
+        const replyToken = event.replyToken;
+        const messageId = event.message.id;
+        const timestamp = new Date(event.timestamp);
+
+        const userExists = await checkUserExists(userId);
+        if (!userExists) {
+          console.log(`User ${userId} is not registered`);
+          continue;
+        }
+
+        const withinPeriod = await isWithinUserPeriod(userId, timestamp);
+        if (!withinPeriod) {
+          await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
+          continue;
+        }
+
+        if (groupId) {
+          try {
+            await getOrFetchGroupInfo(groupId, userId);
+          } catch (error) {
+            console.error('Error getting or fetching group info:', error);
+          }
+        }
+
+        try {
+          const result = await saveImageAsPlace({
+            messageId,
+            userId,
+            groupId: groupId || undefined,
+          });
+
+          if (result.success) {
+            await sendReplyMessage(
+              replyToken,
+              `画像から「${result.placeName}」を特定し、保存しました！`
+            );
+          } else if (result.error === 'place_not_identified') {
+            await sendReplyMessage(
+              replyToken,
+              '画像から場所を特定できませんでした。店名やGoogle Mapsのリンクをテキストで送ってみてください。'
+            );
+          } else {
+            await sendReplyMessage(
+              replyToken,
+              `画像の処理中にエラーが発生しました: ${result.error}`
+            );
+          }
+        } catch (error) {
+          console.error('Error processing image message:', error);
+          await sendReplyMessage(replyToken, '画像の処理中にエラーが発生しました。');
+        }
+      }
+
       if (event.type === 'postback') {
         try {
           await handlePostbackEvent(event);

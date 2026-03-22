@@ -23,6 +23,10 @@ export async function getPlaceDetails(mapUrl: string): Promise<PlaceDetails> {
   return await searchAndFetchPlaceDetails(placeInfo);
 }
 
+export async function searchPlaceByText(query: string): Promise<PlaceDetails> {
+  return searchAndFetchPlaceDetails({ query });
+}
+
 async function searchAndFetchPlaceDetails(placeInfo: PlaceInfo): Promise<PlaceDetails> {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
