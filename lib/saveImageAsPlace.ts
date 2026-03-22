@@ -4,6 +4,7 @@ import { searchPlaceByText, PlaceDetails } from './googleMaps';
 import { saveMapLink } from './saveMapLink';
 import { getCurrentUser } from './User/getCurrentUser';
 import { getJoinGroupInfo } from './Group/getJoinGroupInfo';
+import { saveImageBufferToStorage } from './Storage/GoogleMapPhotoUrl';
 import { SaveMapLinkParams } from '@/types/Link';
 
 type SaveImageAsPlaceParams = {
@@ -15,6 +16,7 @@ type SaveImageAsPlaceParams = {
 type SaveImageAsPlaceResult = {
   success: boolean;
   placeName?: string;
+  imageSaved?: boolean;
   error?: string;
 };
 
@@ -32,44 +34,68 @@ export async function saveImageAsPlace(
     }
     const imageBuffer = Buffer.concat(chunks);
 
-    // 2. GPT-4o Visionで画像を解析
+    // 2. 元画像をFirebase Storageに保存
+    const originalImageUrl = await saveImageBufferToStorage(userId, messageId, imageBuffer);
+    console.log('Original image saved to Storage:', originalImageUrl);
+
+    // 3. GPT-4o Visionで画像を解析
     const analysis = await analyzeImageForPlace(imageBuffer);
     console.log('Image analysis result:', analysis);
 
-    if (!analysis.placeName) {
-      return { success: false, error: 'place_not_identified' };
+    // 4. ユーザー・グループ情報を取得
+    const currentUser = await getCurrentUser(userId);
+    let groupData = null;
+    if (groupId) {
+      groupData = await getJoinGroupInfo(groupId, userId);
     }
 
-    // 3. 検索クエリを構築
+    if (!analysis.placeName) {
+      // 店舗特定できなかった場合でも画像付きLinkを保存
+      const saveParams: SaveMapLinkParams = {
+        userId,
+        groupId: groupId || '',
+        link: '',
+        placeDetails: {
+          name: analysis.category || '画像メモ',
+          address: analysis.area || '',
+          photoUrl: null,
+          latitude: null,
+          longitude: null,
+        },
+        originalImageUrl,
+        displayName: currentUser?.displayName || '',
+        userPictureUrl: currentUser?.pictureUrl || '',
+        groupName: groupData?.groupName || '',
+        members: groupData?.members || [],
+        groupPictureUrl: groupData?.pictureUrl || '',
+      };
+      await saveMapLink(saveParams);
+      return { success: false, error: 'place_not_identified', imageSaved: true };
+    }
+
+    // 5. 検索クエリを構築
     const queryParts = [analysis.placeName];
     if (analysis.area) queryParts.push(analysis.area);
     if (analysis.address) queryParts.push(analysis.address);
     const searchQuery = queryParts.join(' ');
     console.log('Searching Google Places with query:', searchQuery);
 
-    // 4. Google Places APIで検索
+    // 6. Google Places APIで検索
     const placeDetails: PlaceDetails = await searchPlaceByText(searchQuery);
     console.log('Place details found:', placeDetails);
 
-    // 5. Google Maps URLを生成
+    // 7. Google Maps URLを生成
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
       placeDetails.name + ' ' + placeDetails.address
     )}`;
 
-    // 6. ユーザー・グループ情報を取得
-    const currentUser = await getCurrentUser(userId);
-
-    let groupData = null;
-    if (groupId) {
-      groupData = await getJoinGroupInfo(groupId, userId);
-    }
-
-    // 7. Firestoreに保存
+    // 8. Firestoreに保存
     const saveMapLinkParams: SaveMapLinkParams = {
       userId,
       groupId: groupId || '',
       link: mapsUrl,
       placeDetails,
+      originalImageUrl,
       displayName: currentUser?.displayName || '',
       userPictureUrl: currentUser?.pictureUrl || '',
       groupName: groupData?.groupName || '',
@@ -79,7 +105,7 @@ export async function saveImageAsPlace(
 
     await saveMapLink(saveMapLinkParams);
 
-    return { success: true, placeName: placeDetails.name };
+    return { success: true, placeName: placeDetails.name, imageSaved: true };
   } catch (error) {
     console.error('Error in saveImageAsPlace:', error);
     return {

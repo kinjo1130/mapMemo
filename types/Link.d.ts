@@ -15,7 +15,7 @@ export interface Link {
   displayName: string;
   groupName: string;
   groupPictureUrl: string;
-
+  originalImageUrl?: string;
 }
 export interface PlaceDetails {
   name: string;
@@ -34,4 +34,5 @@ export interface SaveMapLinkParams {
   groupName: string;
   members: string[];
   groupPictureUrl: string;
+  originalImageUrl?: string;
 }
