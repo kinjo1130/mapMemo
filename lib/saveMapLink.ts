@@ -13,7 +13,8 @@ export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
       userPictureUrl,
       groupName,
       members,
-      groupPictureUrl
+      groupPictureUrl,
+      originalImageUrl
     } = params;
 
     // Firestoreに保存するデータを作成
@@ -32,7 +33,8 @@ export const saveMapLink = async (params: SaveMapLinkParams): Promise<void> => {
       userPictureUrl,
       groupName,
       members,
-      groupPictureUrl
+      groupPictureUrl,
+      originalImageUrl: originalImageUrl || null
     };
 
     // Firestoreに保存

@@ -251,10 +251,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
               `画像から「${result.placeName}」を特定し、保存しました！`
             );
           } else if (result.error === 'place_not_identified') {
-            await sendReplyMessage(
-              replyToken,
-              '画像から場所を特定できませんでした。店名やGoogle Mapsのリンクをテキストで送ってみてください。'
-            );
+            if (result.imageSaved) {
+              await sendReplyMessage(
+                replyToken,
+                '画像から場所を特定できませんでしたが、画像は保存しました。'
+              );
+            } else {
+              await sendReplyMessage(
+                replyToken,
+                '画像から場所を特定できませんでした。店名やGoogle Mapsのリンクをテキストで送ってみてください。'
+              );
+            }
           } else {
             await sendReplyMessage(
               replyToken,

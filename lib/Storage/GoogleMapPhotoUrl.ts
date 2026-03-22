@@ -1,6 +1,29 @@
 import { bucket } from '../../lib/init/firebase-admin';
 import fetch from 'node-fetch';
 
+export async function saveImageBufferToStorage(
+  userId: string,
+  messageId: string,
+  imageBuffer: Buffer
+): Promise<string> {
+  const fileName = `line-images/${userId}/${messageId}_${Date.now()}.jpg`;
+  const file = bucket.file(fileName);
+
+  await file.save(imageBuffer, {
+    metadata: {
+      contentType: 'image/jpeg',
+      metadata: {
+        userId,
+        messageId,
+        timestamp: Date.now().toString(),
+      },
+    },
+  });
+
+  await file.makePublic();
+  return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+}
+
 
 export async function fetchAndSaveToFirestore(
   placeId: string,
