@@ -19,6 +19,8 @@ type SaveImageAsPlaceParams = {
 type SaveImageAsPlaceResult = {
   success: boolean;
   placeName?: string;
+  placeAddress?: string;
+  mapsUrl?: string;
   pendingId?: string;
   imageSaved?: boolean;
   error?: string;
@@ -117,7 +119,14 @@ export async function saveImageAsPlace(
     const docRef = await db.collection('pendingPlaces').add(pendingData);
     console.log('Pending place saved with ID:', docRef.id);
 
-    return { success: true, placeName: placeDetails.name, pendingId: docRef.id, imageSaved: true };
+    return {
+      success: true,
+      placeName: placeDetails.name,
+      placeAddress: placeDetails.address,
+      mapsUrl,
+      pendingId: docRef.id,
+      imageSaved: true,
+    };
   } catch (error) {
     console.error('Error in saveImageAsPlace:', error);
     return {
