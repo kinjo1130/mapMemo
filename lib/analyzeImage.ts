@@ -5,6 +5,7 @@ export interface ImageAnalysisResult {
   address: string | null;
   area: string | null;
   category: string | null;
+  confidence: 'high' | 'medium' | 'low';
 }
 
 export async function analyzeImageForPlace(imageBuffer: Buffer): Promise<ImageAnalysisResult> {
@@ -18,7 +19,12 @@ export async function analyzeImageForPlace(imageBuffer: Buffer): Promise<ImageAn
       {
         role: 'system',
         content: `あなたは画像から店舗・施設の情報を抽出するアシスタントです。
-画像に写っている店舗名、住所、エリア、カテゴリを特定してください。
+
+【最重要ルール】
+- 看板・サイン・ロゴに書かれている文字を正確に読み取ってください
+- 文字が部分的にしか読めない場合は、読めた部分だけを返してください
+- 推測で店舗名を補完・変更しないでください
+- 読み取れない文字は無理に埋めないでください
 
 以下のような情報源を認識してください：
 - 店舗の看板・外観
@@ -33,7 +39,8 @@ export async function analyzeImageForPlace(imageBuffer: Buffer): Promise<ImageAn
   "placeName": "店舗名（特定できない場合はnull）",
   "address": "住所（見える場合のみ、なければnull）",
   "area": "エリア・地域名（推定可能な場合、なければnull）",
-  "category": "カテゴリ（レストラン、カフェ、居酒屋など、なければnull）"
+  "category": "カテゴリ（レストラン、カフェ、居酒屋など、なければnull）",
+  "confidence": "high/medium/low（看板文字がはっきり読める=high、一部読める=medium、推測=low）"
 }
 
 日本語の店名がある場合は日本語を優先してください。
@@ -50,7 +57,7 @@ export async function analyzeImageForPlace(imageBuffer: Buffer): Promise<ImageAn
             type: 'image_url',
             image_url: {
               url: dataUrl,
-              detail: 'low',
+              detail: 'high',
             },
           },
         ],
@@ -61,7 +68,7 @@ export async function analyzeImageForPlace(imageBuffer: Buffer): Promise<ImageAn
 
   const content = response.choices[0]?.message?.content;
   if (!content) {
-    return { placeName: null, address: null, area: null, category: null };
+    return { placeName: null, address: null, area: null, category: null, confidence: 'low' };
   }
 
   try {
@@ -71,9 +78,10 @@ export async function analyzeImageForPlace(imageBuffer: Buffer): Promise<ImageAn
       address: parsed.address || null,
       area: parsed.area || null,
       category: parsed.category || null,
+      confidence: parsed.confidence || 'low',
     };
   } catch {
     console.error('Failed to parse OpenAI response:', content);
-    return { placeName: null, address: null, area: null, category: null };
+    return { placeName: null, address: null, area: null, category: null, confidence: 'low' };
   }
 }

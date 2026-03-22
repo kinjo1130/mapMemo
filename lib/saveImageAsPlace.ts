@@ -55,7 +55,7 @@ export async function saveImageAsPlace(
       groupData = await getJoinGroupInfo(groupId, userId);
     }
 
-    if (!analysis.placeName) {
+    if (!analysis.placeName || analysis.confidence === 'low') {
       // 店舗特定できなかった場合は画像付きLinkを即保存（確認不要）
       const saveParams: SaveMapLinkParams = {
         userId,
