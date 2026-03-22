@@ -245,11 +245,27 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             groupId: groupId || undefined,
           });
 
-          if (result.success) {
-            await sendReplyMessage(
-              replyToken,
-              `画像から「${result.placeName}」を特定し、保存しました！`
-            );
+          if (result.success && result.pendingId) {
+            await sendReplyMessage(replyToken, {
+              type: 'template',
+              altText: `「${result.placeName}」で合っていますか？`,
+              template: {
+                type: 'confirm',
+                text: `画像から「${result.placeName}」を検出しました。この店舗を保存しますか？`,
+                actions: [
+                  {
+                    type: 'postback',
+                    label: 'はい',
+                    data: `action=confirmPlace&pendingId=${result.pendingId}`,
+                  },
+                  {
+                    type: 'postback',
+                    label: 'いいえ',
+                    data: `action=cancelPlace&pendingId=${result.pendingId}`,
+                  },
+                ],
+              },
+            });
           } else if (result.error === 'place_not_identified') {
             if (result.imageSaved) {
               await sendReplyMessage(

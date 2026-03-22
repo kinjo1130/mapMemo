@@ -1,3 +1,4 @@
+import * as admin from 'firebase-admin';
 import { client } from './init/line';
 import { analyzeImageForPlace } from './analyzeImage';
 import { searchPlaceByText, PlaceDetails } from './googleMaps';
@@ -6,6 +7,8 @@ import { getCurrentUser } from './User/getCurrentUser';
 import { getJoinGroupInfo } from './Group/getJoinGroupInfo';
 import { saveImageBufferToStorage } from './Storage/GoogleMapPhotoUrl';
 import { SaveMapLinkParams } from '@/types/Link';
+
+const db = admin.firestore();
 
 type SaveImageAsPlaceParams = {
   messageId: string;
@@ -16,6 +19,7 @@ type SaveImageAsPlaceParams = {
 type SaveImageAsPlaceResult = {
   success: boolean;
   placeName?: string;
+  pendingId?: string;
   imageSaved?: boolean;
   error?: string;
 };
@@ -50,7 +54,7 @@ export async function saveImageAsPlace(
     }
 
     if (!analysis.placeName) {
-      // 店舗特定できなかった場合でも画像付きLinkを保存
+      // 店舗特定できなかった場合は画像付きLinkを即保存（確認不要）
       const saveParams: SaveMapLinkParams = {
         userId,
         groupId: groupId || '',
@@ -89,23 +93,31 @@ export async function saveImageAsPlace(
       placeDetails.name + ' ' + placeDetails.address
     )}`;
 
-    // 8. Firestoreに保存
-    const saveMapLinkParams: SaveMapLinkParams = {
+    // 8. pendingPlacesに一時保存（確認待ち）
+    const pendingData = {
       userId,
       groupId: groupId || '',
       link: mapsUrl,
-      placeDetails,
+      placeDetails: {
+        name: placeDetails.name,
+        address: placeDetails.address,
+        photoUrl: placeDetails.photoUrl,
+        latitude: placeDetails.latitude,
+        longitude: placeDetails.longitude,
+      },
       originalImageUrl,
       displayName: currentUser?.displayName || '',
       userPictureUrl: currentUser?.pictureUrl || '',
       groupName: groupData?.groupName || '',
       members: groupData?.members || [],
       groupPictureUrl: groupData?.pictureUrl || '',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await saveMapLink(saveMapLinkParams);
+    const docRef = await db.collection('pendingPlaces').add(pendingData);
+    console.log('Pending place saved with ID:', docRef.id);
 
-    return { success: true, placeName: placeDetails.name, imageSaved: true };
+    return { success: true, placeName: placeDetails.name, pendingId: docRef.id, imageSaved: true };
   } catch (error) {
     console.error('Error in saveImageAsPlace:', error);
     return {
