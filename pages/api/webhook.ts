@@ -218,6 +218,22 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const messageId = event.message.id;
         const timestamp = new Date(event.timestamp);
 
+        // 個人チャット時はローディングアニメーションを表示
+        if (!groupId && userId) {
+          try {
+            await fetch('https://api.line.me/v2/bot/chat/loading/start', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_LINE_CHANNEL_ACCESS_TOKEN}`,
+              },
+              body: JSON.stringify({ chatId: userId, loadingSeconds: 60 }),
+            });
+          } catch (e) {
+            console.error('Failed to show loading animation:', e);
+          }
+        }
+
         const userExists = await checkUserExists(userId);
         if (!userExists) {
           console.log(`User ${userId} is not registered`);
@@ -247,25 +263,117 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
           if (result.success && result.pendingId) {
             await sendReplyMessage(replyToken, {
-              type: 'template',
-              altText: `「${result.placeName}」で合っていますか？`,
-              template: {
-                type: 'confirm',
-                text: `画像から「${result.placeName}」を検出しました。この店舗を保存しますか？`,
-                actions: [
-                  {
-                    type: 'postback',
-                    label: 'はい',
-                    data: `action=confirmPlace&pendingId=${result.pendingId}`,
-                  },
-                  {
-                    type: 'postback',
-                    label: 'いいえ',
-                    data: `action=cancelPlace&pendingId=${result.pendingId}`,
-                  },
-                ],
+              type: 'flex',
+              altText: `「${result.placeName}」を保存しますか？`,
+              contents: {
+                type: 'bubble',
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: '店舗が見つかりました',
+                      weight: 'bold',
+                      size: 'lg',
+                      color: '#2D7B51',
+                    },
+                    {
+                      type: 'separator',
+                      margin: 'md',
+                    },
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      margin: 'lg',
+                      spacing: 'sm',
+                      contents: [
+                        {
+                          type: 'box',
+                          layout: 'horizontal',
+                          contents: [
+                            {
+                              type: 'text',
+                              text: '店名',
+                              color: '#888888',
+                              size: 'sm',
+                              flex: 2,
+                            },
+                            {
+                              type: 'text',
+                              text: result.placeName || '',
+                              wrap: true,
+                              size: 'sm',
+                              flex: 5,
+                            },
+                          ],
+                        },
+                        {
+                          type: 'box',
+                          layout: 'horizontal',
+                          contents: [
+                            {
+                              type: 'text',
+                              text: '住所',
+                              color: '#888888',
+                              size: 'sm',
+                              flex: 2,
+                            },
+                            {
+                              type: 'text',
+                              text: result.placeAddress || '不明',
+                              wrap: true,
+                              size: 'sm',
+                              flex: 5,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      type: 'button',
+                      action: {
+                        type: 'uri',
+                        label: 'Google Mapで確認',
+                        uri: result.mapsUrl || '',
+                      },
+                      style: 'link',
+                      height: 'sm',
+                      margin: 'md',
+                      color: '#2D7B51',
+                    },
+                  ],
+                },
+                footer: {
+                  type: 'box',
+                  layout: 'horizontal',
+                  spacing: 'md',
+                  contents: [
+                    {
+                      type: 'button',
+                      action: {
+                        type: 'postback',
+                        label: '保存する',
+                        data: `action=confirmPlace&pendingId=${result.pendingId}`,
+                      },
+                      style: 'primary',
+                      color: '#2D7B51',
+                      height: 'sm',
+                    },
+                    {
+                      type: 'button',
+                      action: {
+                        type: 'postback',
+                        label: 'キャンセル',
+                        data: `action=cancelPlace&pendingId=${result.pendingId}`,
+                      },
+                      style: 'secondary',
+                      height: 'sm',
+                    },
+                  ],
+                },
               },
-            });
+            } as any);
           } else if (result.error === 'place_not_identified') {
             if (result.imageSaved) {
               await sendReplyMessage(
