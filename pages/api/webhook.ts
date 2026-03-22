@@ -11,6 +11,7 @@ import { checkUserExists } from '@/lib/User/checkUserExists';
 import { getOrFetchGroupInfo } from '@/lib/groupUtils';
 import { joinGroup } from '@/lib/Group/joinGroup';
 import { IsJoinGroup } from '@/lib/Group/IsJoinGroup';
+import { saveImagePost } from '@/lib/saveImagePost';
 
 const isGoogleMapsUrl = (text: string) => {
   // URLを抽出するための正規表現
@@ -210,6 +211,53 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
         }
       }
+      // 画像メッセージの処理
+      if (event.type === 'message' && event.message.type === 'image') {
+        const { userId, groupId } = event.source;
+        const replyToken = event.replyToken;
+        const messageId = event.message.id;
+        const timestamp = new Date(event.timestamp);
+
+        // グループメッセージの場合、グループ情報を取得または保存
+        if (groupId) {
+          try {
+            await getOrFetchGroupInfo(groupId, userId);
+          } catch (error) {
+            console.error('Error getting or fetching group info:', error);
+          }
+        }
+
+        const userExists = await checkUserExists(userId);
+        if (!userExists) {
+          console.log(`User ${userId} is not registered`);
+          return;
+        }
+
+        // 期間内かどうかのチェック
+        const withinPeriod = await isWithinUserPeriod(userId, timestamp);
+        if (!withinPeriod) {
+          await sendReplyMessage(replyToken, 'この期間にはメッセージを保存できません。');
+          continue;
+        }
+
+        try {
+          const result = await saveImagePost({
+            messageId,
+            userId,
+            groupId: groupId || '',
+          });
+
+          if (result.error) {
+            await sendReplyMessage(replyToken, `画像の保存中にエラーが発生しました: ${result.error}`);
+          } else {
+            await sendReplyMessage(replyToken, '画像を保存しました。');
+          }
+        } catch (error) {
+          console.error('Error saving image:', error);
+          await sendReplyMessage(replyToken, '画像の保存中にエラーが発生しました。');
+        }
+      }
+
       if (event.type === 'postback') {
         try {
           await handlePostbackEvent(event);

@@ -15,7 +15,7 @@ export interface Link {
   displayName: string;
   groupName: string;
   groupPictureUrl: string;
-
+  type?: 'map' | 'image';
 }
 export interface PlaceDetails {
   name: string;
